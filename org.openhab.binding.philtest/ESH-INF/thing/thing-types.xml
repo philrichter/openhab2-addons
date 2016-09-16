@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="philtest"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+        xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+    <!-- See documentation http://www.eclipse.org/smarthome/documentation/development/bindings/thing-definition.html -->
+ 
+    <!-- Sample Thing Type -->
+    <thing-type id="sample">
+        <label>PhilTest Binding Thing</label>
+        <description>Sample thing for PhilTest Binding</description>
+
+        <channels>
+            <channel id="channel1" typeId="sample-channel"/>
+            <channel id="channelLedOnOffState" typeId="ledonoffstate-channel" />
+            <channel id="channelBrightness" typeId="brightness-channel" />
+        </channels>
+        
+        <config-description>
+            <parameter name="serialport" type="text">
+                <label>Serial Port</label>
+                <description>This defines the serial port to communicate with.</description>
+            </parameter>
+        </config-description>
+    </thing-type>
+
+    <!-- Sample Channel Type -->
+    <channel-type id="sample-channel">
+        <item-type>Switch</item-type>
+        <label>Phil's Button</label>
+        <description>Sample channel for PhilTest Binding</description>
+    </channel-type>
+    
+    <channel-type id="brightness-channel">
+        <item-type>Number</item-type>
+        <label>Brightness (in %)</label>
+        <description>The currently measured brightness.</description>
+        <state readOnly="true" pattern="%.0f" />
+    </channel-type>
+    
+    <channel-type id="ledonoffstate-channel">
+        <item-type>Switch</item-type>
+        <label>LED On/Off</label>
+        <description>The currently on/off state of the led with respect to the switch state.</description>
+        <state readOnly="true" />
+    </channel-type>
+
+</thing:thing-descriptions>
