@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="serialledcontrol"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+        xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+    <!-- Sample Thing Type -->
+    <thing-type id="sample2">
+        <label>SerialLEDControl Binding Thing</label>
+        <description>Sample thing for SerialLEDControl Binding</description>
+
+        <channels>
+            <channel id="ledonoffswitch" typeId="ledonoffswitch-channel"/>
+        </channels>
+        
+        <config-description>
+            <parameter name="serialport" type="text">
+                <label>Serial Port</label>
+                <description>This defines the serial port to communicate with.</description>
+            </parameter>
+        </config-description>
+        
+    </thing-type>
+
+    <!-- Sample Channel Type -->
+
+    <channel-type id="ledonoffswitch-channel">
+        <item-type>Switch</item-type>
+        <label>SerialLEDControl Binding Channel</label>
+        <description>Change the LED state.</description>
+    </channel-type>
+
+
+</thing:thing-descriptions>
