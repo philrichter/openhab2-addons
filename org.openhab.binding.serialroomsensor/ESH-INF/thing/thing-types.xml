@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="serialroomsensor"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+        xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+    <!-- Sample Thing Type -->
+    <thing-type id="roomsensorstate">
+        <label>SerialRoomSensor Binding Thing</label>
+        <description>Sample thing for SerialRoomSensor Binding</description>
+
+        <channels>
+            <channel id="temperature" typeId="channel_temperature"/>
+            <channel id="brightness" typeId="channel_brightness"/>
+            <channel id="humidity" typeId="channel_humidity"/>
+            <channel id="refresh" typeId="channel_refresh" />
+        </channels>
+        
+        <config-description>
+            <parameter name="serialport" type="text">
+                <label>Serial Port</label>
+                <description>Defines the serial port to communicate with.</description>
+            </parameter>
+            <parameter name="refreshrate" type="integer">
+                <label>Refresh rate (seconds)</label>
+                <description>Defines the refresh rate of the sensor. Default or 0 means each value change will be propagated.</description>
+            </parameter>
+        </config-description>
+        
+    </thing-type>
+
+    <channel-type id="channel_temperature">
+        <item-type>Number</item-type>
+        <label>Temperature</label>
+        <description>Provides the currently measured temperature.</description>
+        <state readOnly="true" pattern="%.1f °C" />
+    </channel-type>
+    
+    <channel-type id="channel_brightness">
+        <item-type>Number</item-type>
+        <label>Brightness</label>
+        <description>Provides the currently measured brightness.</description>
+        <state readOnly="true" pattern="%d %%" />
+    </channel-type>
+    
+    <channel-type id="channel_humidity">
+        <item-type>Number</item-type>
+        <label>Humidity</label>
+        <description>Provides the currently measured humidity.</description>
+        <state readOnly="true" pattern="%d %%" />
+    </channel-type>
+    
+    <channel-type id="channel_refresh">
+        <item-type>serialroomsensorItem</item-type>
+        <label>Refresh Channel</label>
+        <description>Triggers the sensor to update its state.</description>
+    </channel-type>
+    
+</thing:thing-descriptions>
