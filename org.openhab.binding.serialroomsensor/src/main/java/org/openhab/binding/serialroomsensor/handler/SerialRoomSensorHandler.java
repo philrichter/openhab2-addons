@@ -22,6 +22,7 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialTestHandler;
+import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialThing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SerialRoomSensorHandler extends BaseThingHandler {
 
-    private Logger logger = LoggerFactory.getLogger(SerialRoomSensorHandler.class);
+    private static Logger LOG = LoggerFactory.getLogger(SerialRoomSensorHandler.class);
 
     private SerialPortCommunicator serialPortComm;
 
@@ -54,28 +55,43 @@ public class SerialRoomSensorHandler extends BaseThingHandler {
 
     @Override
     public void dispose() {
-        refreshJob.cancel(true);
-        serialPortComm.close();
+        reset();
         super.dispose();
+    }
+
+    private void reset() {
+        if (refreshJob != null) {
+            refreshJob.cancel(true);
+        }
+        if (serialPortComm != null) {
+            serialPortComm.close();
+        }
     }
 
     @Override
     public void initialize() {
-        updateStatus(ThingStatus.ONLINE);
+        updateStatus(ThingStatus.INITIALIZING);
 
-        String serialPortToUse = getConfiguredSerialPort();
+        reset();
+
+        String serialPortToUse = getThing().getProperties().get(SerialThing.PORT); // getConfiguredSerialPort();
 
         if (serialPortToUse != null) {
-            logger.info("initialize: use specific serial port configured by user: '" + serialPortToUse + "'");
+            LOG.info("initialize: use specific serial port configured by user: '" + serialPortToUse + "'");
         }
-        logger.info("initialize: use update rate of: " + getRefreshRate());
+        LOG.info("initialize: use update rate of: " + getRefreshRate());
 
         serialPortComm = new SerialPortCommunicator(createSerialPortHandler());
         String errorMesssage = serialPortComm.initialize(serialPortToUse);
 
         if (errorMesssage == null) {
-            startAutomaticRefresh();
             updateStatus(ThingStatus.ONLINE);
+            if (isAutomaticRefreshActivated()) {
+                startAutomaticRefresh();
+            } else {
+                // Request current values for initial thing ui values
+                serialPortComm.sendRequestCurrentValues();
+            }
         } else {
             updateStatus(ThingStatus.UNINITIALIZED, ThingStatusDetail.HANDLER_INITIALIZING_ERROR, errorMesssage);
         }
@@ -118,7 +134,7 @@ public class SerialRoomSensorHandler extends BaseThingHandler {
             try {
                 refreshRate = (BigDecimal) getThing().getConfiguration().get(PARAM_REFRESHRATE);
             } catch (Exception e) {
-                logger.debug("Cannot set refresh rate parameter.", e);
+                LOG.debug("Cannot set refresh rate parameter.", e);
             }
 
             if (refreshRate == null) {
@@ -130,15 +146,17 @@ public class SerialRoomSensorHandler extends BaseThingHandler {
 
     private void startAutomaticRefresh() {
 
-        if (getRefreshRate().intValue() > 0) {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    serialPortComm.sendUpdateState();
-                }
-            };
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                serialPortComm.sendUpdateState();
+            }
+        };
 
-            refreshJob = scheduler.scheduleAtFixedRate(runnable, 0, getRefreshRate().intValue(), TimeUnit.SECONDS);
-        }
+        refreshJob = scheduler.scheduleAtFixedRate(runnable, 0, getRefreshRate().intValue(), TimeUnit.SECONDS);
+    }
+
+    private boolean isAutomaticRefreshActivated() {
+        return getRefreshRate().intValue() > 0;
     }
 }

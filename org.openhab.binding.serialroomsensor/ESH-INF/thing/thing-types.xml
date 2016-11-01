@@ -16,16 +16,16 @@
             <channel id="refresh" typeId="channel_refresh" />
         </channels>
         
-        <config-description>
-            <parameter name="serialport" type="text">
-                <label>Serial Port</label>
-                <description>Defines the serial port to communicate with.</description>
-            </parameter>
-            <parameter name="refreshrate" type="integer">
-                <label>Refresh rate (seconds)</label>
-                <description>Defines the refresh rate of the sensor. Default or 0 means each value change will be propagated.</description>
-            </parameter>
-        </config-description>
+<!--         <config-description> -->
+<!--             <parameter name="serialport" type="text"> -->
+<!--                 <label>Serial Port</label> -->
+<!--                 <description>Defines the serial port to communicate with.</description> -->
+<!--             </parameter> -->
+<!--             <parameter name="refreshrate" type="integer"> -->
+<!--                 <label>Refresh rate (seconds)</label> -->
+<!--                 <description>Defines the refresh rate of the sensor. Default or 0 means each value change will be propagated.</description> -->
+<!--             </parameter> -->
+<!--         </config-description> -->
         
     </thing-type>
 
@@ -51,8 +51,8 @@
     </channel-type>
     
     <channel-type id="channel_refresh">
-        <item-type>serialroomsensorItem</item-type>
-        <label>Refresh Channel</label>
+        <item-type>refreshItem</item-type>
+        <label>Refresh</label>
         <description>Triggers the sensor to update its state.</description>
     </channel-type>
     

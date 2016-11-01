@@ -10,6 +10,8 @@ const String SERIALID_OUT_SEPARATOR = "=";
 
 // incoming command to start the refresh process
 const String SERIALID_IN_REFRESH = "REFRESH";
+// incoming command to send all current values (i.e. for initialization of an ui element)
+const String SERIALID_IN_CURRENTVALUES = "CURRENTVALUES";
 
 // Input of the photo resistor sensor
 const int PIN_IN_BRIGHTNESS = A5;
@@ -26,7 +28,9 @@ int lastBrightness = -1;
 byte lastHumidity = -1;
 byte lastTemperature = -1;
 
-// contains the refresh command, if a refresh is required. See serialEvent().
+// queue of all incoming serial commands. Holds more than one, if the processing speed is not fast enough.
+String queue = "";
+// contains the current incoming command. See serialEvent().
 String serialInput = "";
 bool serialInputComplete = false;
 
@@ -42,7 +46,14 @@ void setup() {
 // the loop routine runs over and over again forever
 void loop() {
 
-  if (isRefreshRequired()) {
+  bool currentValuesRequested = isCurrentValuesRequested();
+  if (currentValuesRequested) {
+    lastBrightness = -1;
+    lastHumidity = -1;
+    lastTemperature = -1;
+  }
+  
+  if (isRefreshRequired() || isCurrentValuesRequested) {
 
     switchUpdateLEDOn();
 
@@ -72,28 +83,35 @@ void loop() {
   delay(1000);
 }
 
-/*
-  SerialEvent occurs whenever a new data comes in the
- hardware serial RX.  This routine is run between each
- time loop() runs, so using delay inside loop can delay
- response.  Multiple bytes of data may be available.
- */
 void serialEvent() {
 
   bool serialInputAvailable = false;
-  
+
   while (Serial.available()) {
+    queue += (char)Serial.read();
     serialInputAvailable = true;
-    char inChar = (char)Serial.read();
-    if (inChar == '\n') {
+  }
+
+  if (serialInput.length() > 0 || serialInputAvailable == false) {
+    return;
+  }
+  
+  for (int i = 0; i < queue.length(); i++) {
+    char ch = queue.charAt(i);
+    if (ch == '\n') {
       serialInputComplete = true;
+      break;
     } else {
-      serialInput += inChar;  
+      serialInput += ch;
     }
   }
 
-  if (serialInputAvailable) {
+  if (serialInputComplete) {
+    queue = queue.substring(serialInput.length() + 1);
     writeLog("read serial input = ", serialInput);
+    if (queue.length() > 0) {
+      writeLog("remaining serial input in queue = ", queue);  
+    }
   }
 }
 
@@ -152,6 +170,17 @@ bool isRefreshRequired() {
   return result;
 }
 
+bool isCurrentValuesRequested() {
+
+  if (serialInputComplete && SERIALID_IN_CURRENTVALUES.equals(serialInput)) {
+    writeLog("CURRENTVALUES command received");
+    serialInput = "";
+    serialInputComplete = false;
+    return true;
+  }
+  return false;
+}
+
 void writeBrightnessToSerial(int brightness) {
   writeToSerial(SERIALID_OUT_BRIGHTNESS, (String) brightness);
 }
@@ -180,6 +209,18 @@ void writeLog(String logMessage, String value) {
   Serial.println("LOG=" + logMessage + value);
 }
 
+void writeLog(String logMessage, bool value) {
+  Serial.println("LOG=" + logMessage + value);
+}
+
 void writeLog(String logMessage) {
   Serial.println("LOG=" + logMessage);
+}
+
+void writeLog(char ch) {
+  Serial.println("LOG=" + ch);
+}
+
+void writeLog(bool state) {
+  Serial.println("LOG=" + state);
 }
