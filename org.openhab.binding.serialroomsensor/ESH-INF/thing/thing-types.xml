@@ -4,28 +4,27 @@
         xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
         xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
-    <!-- Sample Thing Type -->
-    <thing-type id="roomsensorstate">
-        <label>SerialRoomSensor Binding Thing</label>
-        <description>Sample thing for SerialRoomSensor Binding</description>
+    <!-- Room sensor -->
+    <thing-type id="roomsensor">
+        <label>Raumsensor</label>
+        <description>Liefert die aktuelle Helligkeit, Temperatur und Luftfeuchtigkeit.</description>
 
         <channels>
             <channel id="temperature" typeId="channel_temperature"/>
             <channel id="brightness" typeId="channel_brightness"/>
             <channel id="humidity" typeId="channel_humidity"/>
-            <channel id="refresh" typeId="channel_refresh" />
         </channels>
         
-<!--         <config-description> -->
-<!--             <parameter name="serialport" type="text"> -->
-<!--                 <label>Serial Port</label> -->
-<!--                 <description>Defines the serial port to communicate with.</description> -->
-<!--             </parameter> -->
-<!--             <parameter name="refreshrate" type="integer"> -->
-<!--                 <label>Refresh rate (seconds)</label> -->
-<!--                 <description>Defines the refresh rate of the sensor. Default or 0 means each value change will be propagated.</description> -->
-<!--             </parameter> -->
-<!--         </config-description> -->
+    </thing-type>
+    
+    <!-- Door bell -->
+    <thing-type id="doorbell">
+        <label>Türklingel</label>
+        <description>Liefert die Information darüber, ob jemand die Türklingel betätigt hat.</description>
+
+        <channels>
+            <channel id="doorbell" typeId="channel_doorbell" />
+        </channels>
         
     </thing-type>
 
@@ -50,10 +49,11 @@
         <state readOnly="true" pattern="%d %%" />
     </channel-type>
     
-    <channel-type id="channel_refresh">
-        <item-type>refreshItem</item-type>
-        <label>Refresh</label>
-        <description>Triggers the sensor to update its state.</description>
+    <channel-type id="channel_doorbell">
+        <item-type>Switch</item-type>
+        <label>Button</label>
+        <description>Provide the button press state.</description>
+        <state readOnly="true" />
     </channel-type>
     
 </thing:thing-descriptions>

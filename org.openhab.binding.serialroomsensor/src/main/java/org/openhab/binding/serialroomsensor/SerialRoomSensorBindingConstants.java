@@ -7,6 +7,9 @@
  */
 package org.openhab.binding.serialroomsensor;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 
 /**
@@ -20,13 +23,23 @@ public class SerialRoomSensorBindingConstants {
     public static final String BINDING_ID = "serialroomsensor";
 
     // List of all Thing Type UIDs
-    public final static ThingTypeUID THING_TYPE_STATE = new ThingTypeUID(BINDING_ID, "roomsensorstate");
+    public final static ThingTypeUID THING_TYPE_ROOMSENSOR = new ThingTypeUID(BINDING_ID, "roomsensor");
+    public final static ThingTypeUID THING_TYPE_DOORBELL = new ThingTypeUID(BINDING_ID, "doorbell");
 
-    // List of all Channel ids
+    public final static Set<ThingTypeUID> SUPPORTED_THING_TYPES = new HashSet<ThingTypeUID>();
+
+    static {
+        SUPPORTED_THING_TYPES.add(THING_TYPE_ROOMSENSOR);
+        SUPPORTED_THING_TYPES.add(THING_TYPE_DOORBELL);
+    }
+
+    // Room sensor
     public final static String CHANNEL_BRIGHTNESS = "brightness";
     public final static String CHANNEL_TEMPERATURE = "temperature";
     public final static String CHANNEL_HUMIDITY = "humidity";
-    public final static String CHANNEL_REFRESH = "refresh";
+
+    // Door bell
+    public final static String CHANNEL_DOORBELL = "doorbell";
 
     public final static String PARAM_SERIALPORT = "serialport";
     public final static String PARAM_REFRESHRATE = "refreshrate";

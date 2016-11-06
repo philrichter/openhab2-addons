@@ -1,8 +1,6 @@
 package org.openhab.binding.serialroomsensor.discovery;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
@@ -15,17 +13,16 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.openhab.binding.serialroomsensor.SerialRoomSensorBindingConstants;
 import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator;
 import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialThing;
+import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialThingListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableSet;
 
 public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
 
     private static Logger LOG = LoggerFactory.getLogger(SerialRoomSensorDiscoveryService.class);
 
-    private final static int INITIAL_DELAY = 5;
-    private final static int SCAN_INTERVAL = 6;
+    private final static int INITIAL_DELAY = 15;
+    private final static int SCAN_INTERVAL = 10;
     private static final int DISCOVER_TIMEOUT = 30;
 
     private Map<String, SerialThing> discoveredThings = new HashMap<String, SerialThing>();
@@ -33,8 +30,7 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
     private ScheduledFuture<?> scanningJob;
 
     public SerialRoomSensorDiscoveryService() throws IllegalArgumentException {
-        super(ImmutableSet.of(new ThingTypeUID(SerialRoomSensorBindingConstants.THING_TYPE_STATE.getAsString())),
-                DISCOVER_TIMEOUT, true);
+        super(SerialRoomSensorBindingConstants.SUPPORTED_THING_TYPES, DISCOVER_TIMEOUT, true);
         activate(null);
     }
 
@@ -69,7 +65,6 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
 
     @Override
     public Set<ThingTypeUID> getSupportedThingTypes() {
-
         return super.getSupportedThingTypes();
     }
 
@@ -87,29 +82,36 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
 
     private synchronized void scan() {
 
-        Map<String, SerialThing> serialThings = SerialPortCommunicator.searchSerialThings();
-
-        List<SerialThing> thingsToRemove = new ArrayList<SerialThing>();
-        for (SerialThing discoveredThing : discoveredThings.values()) {
-            if (!serialThings.containsKey(discoveredThing.getId())) {
-                thingsToRemove.add(discoveredThing);
-            }
-        }
-        for (SerialThing thing : thingsToRemove) {
-            thingRemoved(thing.getUID());
-            discoveredThings.remove(thing.getId());
-        }
-
-        for (SerialThing thing : serialThings.values()) {
-            thingDiscovered(createDiscoveryResult(thing));
-            discoveredThings.put(thing.getId(), thing);
-        }
         removeOlderResults(getTimestampOfLastScan());
+
+        SerialPortCommunicator.searchSerialThings(getSupportedThingTypes(), new SerialThingListener() {
+
+            @Override
+            public void onFound(SerialThing thing) {
+                thingDiscovered(createDiscoveryResult(thing));
+            }
+        });
+
+        // List<SerialThing> thingsToRemove = new ArrayList<SerialThing>();
+        // for (SerialThing discoveredThing : discoveredThings.values()) {
+        // if (!serialThings.containsKey(discoveredThing.getId())) {
+        // thingsToRemove.add(discoveredThing);
+        // }
+        // }
+        //
+        // for (SerialThing thing : thingsToRemove) {
+        // thingRemoved(thing.getUID());
+        // discoveredThings.remove(thing.getId());
+        // }
+        //
+        // for (SerialThing thing : serialThings.values()) {
+        // thingDiscovered(createDiscoveryResult(thing));
+        // discoveredThings.put(thing.getId(), thing);
+        // }
     }
 
     private DiscoveryResult createDiscoveryResult(SerialThing thing) {
-        return DiscoveryResultBuilder.create(thing.getUID()).withLabel(thing.getLabel())
-                .withProperty(SerialThing.PORT, thing.getPort())
-                .withThingType(SerialRoomSensorBindingConstants.THING_TYPE_STATE).build();
+        return DiscoveryResultBuilder.create(thing.getThingUID()).withThingType(thing.getTypeUID())
+                .withProperty(SerialThing.PORT, thing.getPort()).withLabel(thing.getLabel()).build();
     }
 }

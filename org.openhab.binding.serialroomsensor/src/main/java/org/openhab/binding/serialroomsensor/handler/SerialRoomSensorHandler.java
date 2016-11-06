@@ -7,13 +7,12 @@
  */
 package org.openhab.binding.serialroomsensor.handler;
 
-import static org.openhab.binding.serialroomsensor.SerialRoomSensorBindingConstants.*;
-
 import java.math.BigDecimal;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.PercentType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -21,6 +20,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.openhab.binding.serialroomsensor.SerialRoomSensorBindingConstants;
 import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialTestHandler;
 import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialThing;
 import org.slf4j.Logger;
@@ -34,13 +34,13 @@ import org.slf4j.LoggerFactory;
  */
 public class SerialRoomSensorHandler extends BaseThingHandler {
 
+    private static final long CURRENTVALUES_DELAY = 2;
+
     private static Logger LOG = LoggerFactory.getLogger(SerialRoomSensorHandler.class);
 
     private SerialPortCommunicator serialPortComm;
 
     private ScheduledFuture<?> refreshJob;
-
-    private BigDecimal refreshRate;
 
     public SerialRoomSensorHandler(Thing thing) {
         super(thing);
@@ -48,9 +48,7 @@ public class SerialRoomSensorHandler extends BaseThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (channelUID.getId().equals(CHANNEL_REFRESH)) {
-            serialPortComm.sendUpdateState();
-        }
+
     }
 
     @Override
@@ -70,30 +68,25 @@ public class SerialRoomSensorHandler extends BaseThingHandler {
 
     @Override
     public void initialize() {
+
         updateStatus(ThingStatus.INITIALIZING);
 
         reset();
 
-        String serialPortToUse = getThing().getProperties().get(SerialThing.PORT); // getConfiguredSerialPort();
+        String serialPortToUse = getThing().getProperties().get(SerialThing.PORT);
 
         if (serialPortToUse != null) {
             LOG.info("initialize: use specific serial port configured by user: '" + serialPortToUse + "'");
         }
-        LOG.info("initialize: use update rate of: " + getRefreshRate());
 
-        serialPortComm = new SerialPortCommunicator(createSerialPortHandler());
-        String errorMesssage = serialPortComm.initialize(serialPortToUse);
+        try {
+            serialPortComm = new SerialPortCommunicator(createSerialPortHandler());
+            serialPortComm.initialize(serialPortToUse);
 
-        if (errorMesssage == null) {
             updateStatus(ThingStatus.ONLINE);
-            if (isAutomaticRefreshActivated()) {
-                startAutomaticRefresh();
-            } else {
-                // Request current values for initial thing ui values
-                serialPortComm.sendRequestCurrentValues();
-            }
-        } else {
-            updateStatus(ThingStatus.UNINITIALIZED, ThingStatusDetail.HANDLER_INITIALIZING_ERROR, errorMesssage);
+            requestInitialThingValues();
+        } catch (Exception e) {
+            updateStatus(ThingStatus.UNINITIALIZED, ThingStatusDetail.HANDLER_INITIALIZING_ERROR, e.getMessage());
         }
     }
 
@@ -102,61 +95,39 @@ public class SerialRoomSensorHandler extends BaseThingHandler {
 
             @Override
             public void onTemperatureChanged(int temperature) {
-                updateState(new ChannelUID(getThing().getUID(), CHANNEL_TEMPERATURE), new DecimalType(temperature));
+                updateState(new ChannelUID(getThing().getUID(), SerialRoomSensorBindingConstants.CHANNEL_TEMPERATURE),
+                        new DecimalType(temperature));
             }
 
             @Override
             public void onHumidityChanged(int humidity) {
-                updateState(new ChannelUID(getThing().getUID(), CHANNEL_HUMIDITY),
+                updateState(new ChannelUID(getThing().getUID(), SerialRoomSensorBindingConstants.CHANNEL_HUMIDITY),
                         new PercentType(new BigDecimal(humidity)));
             }
 
             @Override
             public void onBrightnessChanged(int brightness) {
-                updateState(new ChannelUID(getThing().getUID(), CHANNEL_BRIGHTNESS),
+                updateState(new ChannelUID(getThing().getUID(), SerialRoomSensorBindingConstants.CHANNEL_BRIGHTNESS),
                         new PercentType(new BigDecimal(brightness)));
+            }
+
+            @Override
+            public void onDoorbellPressed(boolean pressed) {
+                updateState(new ChannelUID(getThing().getUID(), SerialRoomSensorBindingConstants.CHANNEL_DOORBELL),
+                        pressed ? OnOffType.ON : OnOffType.OFF);
             }
         };
     }
 
-    private String getConfiguredSerialPort() {
-        Object portObj = getThing().getConfiguration().get(PARAM_SERIALPORT);
-        if (portObj != null) {
-            return (String) portObj;
-        }
-        return null;
-    }
-
-    private BigDecimal getRefreshRate() {
-
-        if (refreshRate == null) {
-
-            try {
-                refreshRate = (BigDecimal) getThing().getConfiguration().get(PARAM_REFRESHRATE);
-            } catch (Exception e) {
-                LOG.debug("Cannot set refresh rate parameter.", e);
-            }
-
-            if (refreshRate == null) {
-                refreshRate = new BigDecimal(0);
-            }
-        }
-        return refreshRate;
-    }
-
-    private void startAutomaticRefresh() {
+    private void requestInitialThingValues() {
 
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                serialPortComm.sendUpdateState();
+                serialPortComm.sendRequestCurrentValues();
             }
         };
 
-        refreshJob = scheduler.scheduleAtFixedRate(runnable, 0, getRefreshRate().intValue(), TimeUnit.SECONDS);
-    }
-
-    private boolean isAutomaticRefreshActivated() {
-        return getRefreshRate().intValue() > 0;
+        refreshJob = scheduler.schedule(runnable, CURRENTVALUES_DELAY, TimeUnit.SECONDS);
     }
 }

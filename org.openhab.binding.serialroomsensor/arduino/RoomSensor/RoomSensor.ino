@@ -2,14 +2,16 @@
 const String SERIALID_OUT_BRIGHTNESS = "BRIGHTNESS";
 const String SERIALID_OUT_HUMIDITY = "HUMIDITY";
 const String SERIALID_OUT_TEMPERATURE = "TEMPERATURE";
+const String SERIALID_OUT_TYPEID = "TYPEID";
+
 // Logging over serial bus for debugging
 const String SERIALID_OUT_LOG = "LOG";
 
 // separate command and value (i.e. BRIGHTNESS=100)
 const String SERIALID_OUT_SEPARATOR = "=";
 
-// incoming command to start the refresh process
-const String SERIALID_IN_REFRESH = "REFRESH";
+// incoming command if device type is requested
+const String SERIALID_IN_TYPEID = "TYPEID";
 // incoming command to send all current values (i.e. for initialization of an ui element)
 const String SERIALID_IN_CURRENTVALUES = "CURRENTVALUES";
 
@@ -19,6 +21,9 @@ const int PIN_IN_BRIGHTNESS = A5;
 const int PIN_IN_HUMI_TEMP = 8;
 // LED to signal a refresh of the sensors
 const int PIN_OUT_REFRESH = 13;
+
+// Button
+const int PIN_IN_BUTTON = 9;
 
 // refresh rate in seconds. Default: no specific rate, but if a value is changed
 int refreshRate = -1;
@@ -40,12 +45,18 @@ void setup() {
   pinMode(PIN_IN_HUMI_TEMP, OUTPUT);
   pinMode(PIN_OUT_REFRESH, OUTPUT);
   
+
+  // Button
+  pinMode(PIN_IN_BUTTON, INPUT);
+  
   Serial.begin(9600);
 }
 
 // the loop routine runs over and over again forever
 void loop() {
 
+  checkTypeIdRequested();
+  
   bool currentValuesRequested = isCurrentValuesRequested();
   if (currentValuesRequested) {
     lastBrightness = -1;
@@ -53,34 +64,51 @@ void loop() {
     lastTemperature = -1;
   }
   
-  if (isRefreshRequired() || isCurrentValuesRequested) {
+	switchUpdateLEDOn();
 
-    switchUpdateLEDOn();
+	int brightness = readBrightness();
 
-    int brightness = readBrightness();
+	if (lastBrightness != brightness) {
+	  lastBrightness = brightness;
+	  writeBrightnessToSerial(brightness);
+	}
 
-    if (lastBrightness != brightness) {
-      lastBrightness = brightness;
-      writeBrightnessToSerial(brightness);
-    }
+	byte humiTemp[5];
+	readHumiTemp(humiTemp);
 
-    byte humiTemp[5];
-    readHumiTemp(humiTemp);
+	if (lastHumidity != humiTemp[0]) {
+	  lastHumidity = humiTemp[0];
+	  writeHumidityToSerial(humiTemp[0]);
+	}
 
-    if (lastHumidity != humiTemp[0]) {
-      lastHumidity = humiTemp[0];
-      writeHumidityToSerial(humiTemp[0]);
-    }
+	if (lastTemperature != humiTemp[2]) {
+	  lastTemperature = humiTemp[2];
+	  writeTemperatureToSerial(humiTemp[2]);
+	}
 
-    if (lastTemperature != humiTemp[2]) {
-      lastTemperature = humiTemp[2];
-      writeTemperatureToSerial(humiTemp[2]);
-    }
-    
-    switchUpdateLEDOff();
-  }
+	switchUpdateLEDOff();
 
-  delay(1000);
+  delay(500);
+}
+
+int buttonStateOld = 0;
+void checkTypeIdRequested() {
+
+	if (isTypeIdRequired()) {
+    writeLog("type id requested. send type id...");
+		writeTypeIdToSerial();
+	}
+
+//  int buttonState = digitalRead(PIN_IN_BUTTON);
+//
+//  if (buttonState == HIGH && buttonStateOld != HIGH) {
+//    writeLog("button pressed");
+//    writeButtonPressedToSerial();
+//    buttonStateOld = HIGH;
+//  } else if (buttonState == LOW && buttonStateOld != LOW) {
+//    writeLog("button unpressed");
+//    buttonStateOld = LOW;
+//  }
 }
 
 void serialEvent() {
@@ -156,13 +184,10 @@ byte readHumiTempValue() {
   return data;
 }
 
-bool isRefreshRequired() {
+bool isTypeIdRequired() {
   bool result = false;
-  if (refreshRate == -1) {
-    result = true;
-  }
-  if (serialInputComplete && SERIALID_IN_REFRESH.equals(serialInput)) {
-    writeLog("REFRESH command received");
+  if (serialInputComplete && SERIALID_IN_TYPEID.equals(serialInput)) {
+    writeLog("TYPEID command received");
     serialInput = "";
     serialInputComplete = false;
     result = true;
@@ -193,6 +218,14 @@ void writeTemperatureToSerial(byte temperature) {
   writeToSerial(SERIALID_OUT_TEMPERATURE, (String) temperature);
 }
 
+//void writeButtonPressedToSerial() {
+//  writeToSerial(SERIALID_OUT_BUTTONPRESSED, "true");
+//}
+
+void writeTypeIdToSerial() {
+	writeToSerial(SERIALID_OUT_TYPEID, "roomsensor");
+}
+
 void writeToSerial(String command, String value) {
   Serial.println(command + SERIALID_OUT_SEPARATOR + value);
 }
@@ -215,12 +248,4 @@ void writeLog(String logMessage, bool value) {
 
 void writeLog(String logMessage) {
   Serial.println("LOG=" + logMessage);
-}
-
-void writeLog(char ch) {
-  Serial.println("LOG=" + ch);
-}
-
-void writeLog(bool state) {
-  Serial.println("LOG=" + state);
 }
