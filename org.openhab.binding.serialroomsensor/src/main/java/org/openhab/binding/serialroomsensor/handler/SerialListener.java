@@ -2,8 +2,8 @@ package org.openhab.binding.serialroomsensor.handler;
 
 import java.io.IOException;
 
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEventListener;
+import jssc.SerialPort;
+import jssc.SerialPortEventListener;
 
 public interface SerialListener extends SerialPortEventListener {
 

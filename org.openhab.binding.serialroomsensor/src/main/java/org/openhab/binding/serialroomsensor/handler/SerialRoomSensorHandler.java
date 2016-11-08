@@ -63,6 +63,7 @@ public class SerialRoomSensorHandler extends BaseThingHandler {
         }
         if (serialPortComm != null) {
             serialPortComm.close();
+            serialPortComm = null;
         }
     }
 
@@ -74,10 +75,6 @@ public class SerialRoomSensorHandler extends BaseThingHandler {
         reset();
 
         String serialPortToUse = getThing().getProperties().get(SerialThing.PORT);
-
-        if (serialPortToUse != null) {
-            LOG.info("initialize: use specific serial port configured by user: '" + serialPortToUse + "'");
-        }
 
         try {
             serialPortComm = new SerialPortCommunicator(createSerialPortHandler());

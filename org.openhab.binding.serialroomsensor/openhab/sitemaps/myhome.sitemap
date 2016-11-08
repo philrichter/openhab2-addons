@@ -1,0 +1,10 @@
+sitemap myhome label="My Home" {
+	/* 
+	Frame label="Status" {
+		
+	}*/
+	
+	Frame {
+		Group item=g_groundF icon="groundfloor"
+	}
+}

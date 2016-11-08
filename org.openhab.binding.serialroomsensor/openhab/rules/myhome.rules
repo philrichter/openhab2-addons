@@ -1,0 +1,22 @@
+rule AfterOpenHABStarted
+when
+	System started
+then
+	sendCommand(lrSonosNotifVol, 45)
+end
+
+rule DoorBellRings
+when 
+	Item enDoorBell received command ON
+then
+	sendCommand(enDoorBell, "jemand klingelt")
+	sendCommand(lrSonosNotif, "http://192.168.100.57:8080/static/doorbell.mp3")
+	sendCommand(enDoorBell, "-")
+end
+
+rule lrSonosPlayPauseChanged
+when 
+	Item lrSonosPlayPause received command OFF
+then
+	sendCommand(lrSonosNotif, "http://192.168.100.57:8080/static/doorbell.mp3")
+end

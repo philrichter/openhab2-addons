@@ -2,6 +2,7 @@ package org.openhab.binding.serialroomsensor.discovery;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +24,7 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
 
     private final static int INITIAL_DELAY = 15;
     private final static int SCAN_INTERVAL = 10;
-    private static final int DISCOVER_TIMEOUT = 30;
+    private static final int DISCOVER_TIMEOUT = 10;
 
     private Map<String, SerialThing> discoveredThings = new HashMap<String, SerialThing>();
 
@@ -36,12 +37,13 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
 
     @Override
     protected void startScan() {
-        // scan(); TODO test
+        scan();
     }
 
     @Override
     protected synchronized void stopScan() {
         super.stopScan();
+        removeOlderResults(getTimestampOfLastScan());
     }
 
     /**
@@ -82,32 +84,28 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
 
     private synchronized void scan() {
 
-        removeOlderResults(getTimestampOfLastScan());
+        HashMap<String, SerialThing> oldDiscoveredThings = new HashMap<>(discoveredThings);
+        discoveredThings.clear();
 
-        SerialPortCommunicator.searchSerialThings(getSupportedThingTypes(), new SerialThingListener() {
+        LOG.error("scan: oldDiscoveredThings.size = " + oldDiscoveredThings.size() + ", discoveredThings.size = "
+                + discoveredThings.size());
+        Set<String> serialThings = SerialPortCommunicator.searchSerialThings(getSupportedThingTypes(),
+                new SerialThingListener() {
 
-            @Override
-            public void onFound(SerialThing thing) {
-                thingDiscovered(createDiscoveryResult(thing));
+                    @Override
+                    public void onFound(SerialThing thing) {
+                        thingDiscovered(createDiscoveryResult(thing));
+                        discoveredThings.put(thing.getPort(), thing);
+                        LOG.debug("thing discovered: " + thing.getThingUID());
+                    }
+                });
+
+        for (Entry<String, SerialThing> discoverdThing : oldDiscoveredThings.entrySet()) {
+            if (!serialThings.contains(discoverdThing.getKey())) {
+                thingRemoved(discoverdThing.getValue().getThingUID());
+                LOG.debug("thing removed: " + discoverdThing.getValue().getThingUID());
             }
-        });
-
-        // List<SerialThing> thingsToRemove = new ArrayList<SerialThing>();
-        // for (SerialThing discoveredThing : discoveredThings.values()) {
-        // if (!serialThings.containsKey(discoveredThing.getId())) {
-        // thingsToRemove.add(discoveredThing);
-        // }
-        // }
-        //
-        // for (SerialThing thing : thingsToRemove) {
-        // thingRemoved(thing.getUID());
-        // discoveredThings.remove(thing.getId());
-        // }
-        //
-        // for (SerialThing thing : serialThings.values()) {
-        // thingDiscovered(createDiscoveryResult(thing));
-        // discoveredThings.put(thing.getId(), thing);
-        // }
+        }
     }
 
     private DiscoveryResult createDiscoveryResult(SerialThing thing) {

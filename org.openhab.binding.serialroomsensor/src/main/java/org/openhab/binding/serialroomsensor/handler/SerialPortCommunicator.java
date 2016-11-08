@@ -1,12 +1,7 @@
 package org.openhab.binding.serialroomsensor.handler;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TooManyListenersException;
 
@@ -15,11 +10,12 @@ import org.eclipse.smarthome.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gnu.io.CommPortIdentifier;
 import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEvent;
 import gnu.io.UnsupportedCommOperationException;
+import jssc.SerialPort;
+import jssc.SerialPortEvent;
+import jssc.SerialPortException;
+import jssc.SerialPortList;
 
 public class SerialPortCommunicator {
 
@@ -36,31 +32,18 @@ public class SerialPortCommunicator {
 
     private final class SerialCommunication implements SerialListener {
 
-        private char[] buffer = new char[64];
         private String serialInputBuffer = "";
         private SerialPort serialPort = null;
-        /**
-         * A BufferedReader which will be fed by a InputStreamReader
-         * converting the bytes into characters
-         * making the displayed results codepage independent
-         */
-        private BufferedReader input;
-        /** The output stream to the port */
-        private OutputStream output;
 
         @Override
         public void serialEvent(SerialPortEvent oEvent) {
-            if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
+            if (serialPort != null && oEvent.isRXCHAR() && oEvent.getEventValue() > 0) {
                 try {
 
-                    if (input == null) {
-                        throw new Exception("inputReader not initialized");
-                    }
+                    byte[] buffer;
+                    while ((buffer = serialPort.readBytes()) != null) {
 
-                    int count;
-                    while (input.ready() && (count = input.read(buffer)) > -1) {
-
-                        serialInputBuffer += new String(buffer, 0, count);
+                        serialInputBuffer += new String(buffer);
 
                         int newLineIndex;
                         while ((newLineIndex = serialInputBuffer.indexOf(LINE_DELIMITER)) > -1) {
@@ -99,13 +82,11 @@ public class SerialPortCommunicator {
         @Override
         public void setSerialPort(SerialPort port) throws IOException {
             serialPort = port;
-            input = new BufferedReader(new InputStreamReader(port.getInputStream()));
-            output = port.getOutputStream();
         }
 
-        public void write(byte[] data) throws IOException {
-            if (output != null) {
-                output.write(data);
+        public void write(byte[] data) throws SerialPortException {
+            if (serialPort != null) {
+                serialPort.writeBytes(data);
             } else {
                 LOG.error("output stream already closed! Data '" + data + "' could not be send.");
             }
@@ -114,20 +95,12 @@ public class SerialPortCommunicator {
         @Override
         public void close() {
             if (serialPort != null) {
-                serialPort.removeEventListener();
                 try {
-                    input.close();
-                    input = null;
-                } catch (IOException e) {
-                    LOG.error("error during close input stream", e);
+                    serialPort.removeEventListener();
+                    serialPort.closePort();
+                } catch (SerialPortException e) {
+                    LOG.error("error during closing port", e);
                 }
-                try {
-                    output.close();
-                    output = null;
-                } catch (IOException e) {
-                    LOG.error("error during close output stream", e);
-                }
-                serialPort.close();
                 serialPort = null;
             }
         }
@@ -162,11 +135,6 @@ public class SerialPortCommunicator {
         ThingTypeUID getTypeUID();
     }
 
-    /** Milliseconds to block while waiting for port open */
-    private static final int TIME_OUT = 4000;
-    /** Default bits per second for COM port. */
-    private static final int DATA_RATE = 9600;
-
     /** This handler gets the value of an incoming serial event. */
     private SerialTestHandler handler;
 
@@ -184,29 +152,38 @@ public class SerialPortCommunicator {
      * @throws TooManyListenersException
      * @throws UnsupportedCommOperationException
      * @throws PortInUseException
+     * @throws SerialPortException
      */
-    public void initialize(String serialPortToUse)
-            throws IOException, PortInUseException, UnsupportedCommOperationException, TooManyListenersException {
+    public void initialize(String serialPortToUse) throws IOException, SerialPortException {
 
         serialCommunication = new SerialCommunication();
-        initializePortAccess(findSerialPort(serialPortToUse), serialCommunication);
+
+        SerialPort serialPort = findSerialPort(serialPortToUse);
+        serialPort.openPort();
+        initializePortAccess(serialPort, serialCommunication);
     }
 
-    public static final Map<String, SerialThing> searchSerialThings(Set<ThingTypeUID> supportedThingTypes,
+    public static final Set<String> searchSerialThings(Set<ThingTypeUID> supportedThingTypes,
             SerialThingListener listener) {
 
-        Map<String, SerialThing> serialThings = new HashMap<String, SerialThing>();
+        Set<String> serialThings = new HashSet<String>();
 
-        Enumeration<?> ports = findAllPorts();
+        String[] ports = findAllPorts();
 
-        while (ports.hasMoreElements()) {
-            CommPortIdentifier currPort = (CommPortIdentifier) ports.nextElement();
-            if (!currPort.isCurrentlyOwned()) {
-                LOG.info("searchSerialThings: serial thing found at port " + currPort.getName()
-                        + " send identify request...");
-                identifySerialDevice(currPort, listener, supportedThingTypes);
-            } else {
-                LOG.info("searchSerialThings: port " + currPort.getName() + " currently in use -> ignore");
+        for (String port : ports) {
+            SerialPort currPort = new SerialPort(port);
+
+            try {
+                if (!currPort.isOpened() && currPort.openPort()) {
+                    LOG.info("searchSerialThings: serial thing found at port " + currPort.getPortName()
+                            + " send identify request...");
+                    identifySerialDevice(currPort, listener, supportedThingTypes);
+                    serialThings.add(currPort.getPortName());
+                } else {
+                    LOG.info("searchSerialThings: port " + currPort.getPortName() + " currently in use -> ignore");
+                }
+            } catch (SerialPortException e) {
+                LOG.info("searchSerialThings: port " + currPort.getPortName() + " currently in use -> ignore");
             }
         }
         return serialThings;
@@ -221,31 +198,41 @@ public class SerialPortCommunicator {
         return null;
     }
 
-    private static void identifySerialDevice(CommPortIdentifier currPort, SerialThingListener listener,
+    private static void identifySerialDevice(SerialPort currPort, SerialThingListener listener,
             Set<ThingTypeUID> supportedThingTypes) {
 
         try {
-            SerialPort serialPort = initializePortAccess(currPort,
-                    createSerialEventListener(currPort, listener, supportedThingTypes));
-
-            // request the type of the serial device
-            serialPort.getOutputStream().write("TYPEID\n".getBytes());
+            initializePortAccess(currPort, createSerialEventListener(currPort, listener, supportedThingTypes));
+            requestTypeId(currPort);
 
         } catch (Exception e) {
-            LOG.error("error during identify serial port device on port %s", currPort.getName(), e);
+            LOG.error("error during identify serial port device on port %s", currPort.getPortName(), e);
         }
     }
 
-    private static SerialListener createSerialEventListener(CommPortIdentifier currPort, SerialThingListener listener,
+    private static void requestTypeId(SerialPort currPort) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(3000);
+                    // request the type of the serial device
+                    currPort.writeBytes("TYPEID\n".getBytes());
+                } catch (Exception e) {
+                    LOG.error("error during requesting type id of serial thing", e);
+                }
+            }
+        }).start();
+    }
+
+    private static SerialListener createSerialEventListener(SerialPort currPort, SerialThingListener listener,
             Set<ThingTypeUID> supportedThingTypes) {
 
         return new SerialListener() {
 
-            private final static int TIMEOUT_IDENTIFICATION = 10000;
+            private final static int TIMEOUT_IDENTIFICATION = 30000;
 
-            private char[] buffer = new char[64];
             private String serialInputBuffer = "";
-            private BufferedReader inputReader = null;
             private SerialPort serialPort = null;
 
             private long startTime = -1;
@@ -261,17 +248,13 @@ public class SerialPortCommunicator {
                     return;
                 }
 
-                if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
+                if (oEvent.isRXCHAR()) {
                     try {
 
-                        if (inputReader == null) {
-                            throw new Exception("inputReader not initialized");
-                        }
+                        byte[] buffer;
+                        while ((buffer = serialPort.readBytes()) != null) {
 
-                        int count;
-                        while (inputReader.ready() && (count = inputReader.read(buffer)) > -1) {
-
-                            serialInputBuffer += new String(buffer, 0, count);
+                            serialInputBuffer += new String(buffer);
 
                             int newLineIndex;
                             while ((newLineIndex = serialInputBuffer.indexOf(LINE_DELIMITER)) > -1) {
@@ -288,9 +271,10 @@ public class SerialPortCommunicator {
                                                 supportedThingTypes);
 
                                         if (typeUid != null) {
-                                            listener.onFound(createSerialThing(currPort, typeUid)); // TODO label
+                                            listener.onFound(createSerialThing(currPort, typeUid));
                                         }
                                         close();
+                                        return;
                                     } else if (command.startsWith("LOG=")) {
                                         LOG.debug(parseLogMessage(command));
                                     } else {
@@ -309,62 +293,59 @@ public class SerialPortCommunicator {
             @Override
             public void setSerialPort(SerialPort port) throws IOException {
                 serialPort = port;
-                inputReader = new BufferedReader(new InputStreamReader(port.getInputStream()));
             }
 
             @Override
             public void close() {
                 if (serialPort != null) {
-                    serialPort.removeEventListener();
                     try {
-                        inputReader.close();
-                    } catch (IOException e) {
+                        serialPort.removeEventListener();
+                        serialPort.closePort();
+                    } catch (SerialPortException e) {
                         LOG.error("error during close input stream", e);
                     }
-                    serialPort.close();
+                    serialPort = null;
                 }
             }
         };
     }
 
-    private static SerialPort initializePortAccess(CommPortIdentifier port, SerialListener listener)
-            throws IOException, PortInUseException, UnsupportedCommOperationException, TooManyListenersException {
+    private static void initializePortAccess(SerialPort port, SerialListener listener)
+            throws SerialPortException, IOException {
 
         if (port == null) {
             throw new IOException("initialize: Could not find serial port");
         }
 
-        SerialPort serialPort = port.open(SerialPortCommunicator.class.getName(), TIME_OUT);
+        port.setParams(SerialPort.BAUDRATE_9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+        int mask = SerialPort.MASK_RXCHAR + SerialPort.MASK_CTS + SerialPort.MASK_DSR;// Prepare mask
+        port.setEventsMask(mask);
+        port.addEventListener(listener);
 
-        serialPort.setSerialPortParams(DATA_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-        serialPort.addEventListener(listener);
-        serialPort.notifyOnDataAvailable(true);
-
-        listener.setSerialPort(serialPort);
-
-        return serialPort;
+        listener.setSerialPort(port);
     }
 
-    private static SerialThing createSerialThing(CommPortIdentifier currPort, ThingTypeUID typeUid) {
+    private static SerialThing createSerialThing(SerialPort currPort, ThingTypeUID typeUid) {
 
-        final ThingUID thingUid = new ThingUID(typeUid, currPort.getName());
+        final ThingUID thingUid = new ThingUID(typeUid, currPort.getPortName());
 
         return new SerialThing() {
 
             @Override
             public String getPort() {
-                return currPort.getName();
+                return currPort.getPortName();
             }
 
             @Override
             public String getLabel() {
                 // TODO Zugriff auf Label aus thing-types.xml aktuell nicht möglich
-                return ("roomsensor".equals(typeUid.getId()) ? "Raumsensor" : "Türklingel") + " an Port " + getPort();
+                return ("roomsensor".equals(getTypeUID().getId()) ? "Raumsensor" : "Türklingel") + " an Port "
+                        + getPort();
             }
 
             @Override
             public String getId() {
-                return currPort.getName();
+                return /* getTypeUID().getId() + ":" + TODO */currPort.getPortName();
             }
 
             @Override
@@ -383,30 +364,30 @@ public class SerialPortCommunicator {
      * @param serialPortToUse <code>null</code> if the default ports should be used, otherwise the port name (i.e.
      *            /dev/ttyAMC0)
      */
-    private CommPortIdentifier findSerialPort(String serialPortToUse) {
+    private SerialPort findSerialPort(String serialPortToUse) {
 
         LOG.info("findSerialPort: "
                 + (serialPortToUse != null ? "use specific serial port configured by user: '" + serialPortToUse + "'"
                         : "no special port defined. Try to find right port..."));
 
-        Enumeration<?> ports = findAllPorts();
+        String[] ports = findAllPorts();
 
-        while (ports.hasMoreElements()) {
-            CommPortIdentifier currPort = (CommPortIdentifier) ports.nextElement();
+        for (String port : ports) {
 
-            LOG.info("findSerialPort: port found: " + currPort.getName() + " (type: " + currPort.getPortType()
-                    + ", owner: "
-                    + (currPort.isCurrentlyOwned() ? currPort.getCurrentOwner() : "[currently not owned]"));
+            SerialPort currPort = new SerialPort(port);
+
+            LOG.info("findSerialPort: port found: " + currPort.getPortName() + ", opened: " + currPort.isOpened());
 
             if (serialPortToUse != null) {
-                if (currPort.getName().equals(serialPortToUse)) {
-                    LOG.info("findSerialPort: '" + currPort.getName() + "' matches port to use. Use it!");
+                if (currPort.getPortName().equals(serialPortToUse)) {
+                    LOG.info("findSerialPort: '" + currPort.getPortName() + "' matches port to use. Use it!");
                     return currPort;
                 }
             } else {
                 for (String portName : PORT_NAMES) {
-                    if (currPort.getName().equals(portName)) {
-                        LOG.info("findSerialPort: '" + currPort.getName() + "' matches with a default port. Use it!");
+                    if (currPort.getPortName().equals(portName)) {
+                        LOG.info("findSerialPort: '" + currPort.getPortName()
+                                + "' matches with a default port. Use it!");
                         return currPort;
                     }
                 }
@@ -415,18 +396,8 @@ public class SerialPortCommunicator {
         return null;
     }
 
-    private static Enumeration<?> findAllPorts() {
-        Enumeration<?> ports = CommPortIdentifier.getPortIdentifiers();
-
-        if (!ports.hasMoreElements()) {
-            // If Raspberry Pi is used need s special property have to be set:
-            // http://www.raspberrypi.org/phpBB3/viewtopic.php?f=81&t=32186
-            System.setProperty("gnu.io.rxtx.SerialPorts", "/dev/ttyACM0");
-            System.setProperty("gnu.io.rxtx.SerialPorts", "/dev/ttyUSB0");
-            ports = CommPortIdentifier.getPortIdentifiers();
-            LOG.info("findAllPorts: add system property for raspi...");
-        }
-        return ports;
+    private static String[] findAllPorts() {
+        return SerialPortList.getPortNames();
     }
 
     /**
@@ -471,8 +442,8 @@ public class SerialPortCommunicator {
             } else {
                 LOG.warn("serialCommunication already closed! Current values could not be requested.");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            LOG.error("error during requesting current values", e);
         }
 
     }
