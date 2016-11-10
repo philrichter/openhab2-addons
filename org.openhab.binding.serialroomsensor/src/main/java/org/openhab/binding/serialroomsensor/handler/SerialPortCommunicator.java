@@ -62,7 +62,7 @@ public class SerialPortCommunicator {
                                         handler.onHumidityChanged(parseHumidity(command));
                                     } else if (command.startsWith("LOG=")) {
                                         LOG.debug(parseLogMessage(command));
-                                    } else if (command.startsWith("BUTTONPRESSED=")) {
+                                    } else if (command.startsWith("DOORBELL_PRESSED=")) {
                                         handler.onDoorbellPressed(parseButtonPressed(command));
                                     } else {
                                         LOG.info("unknown incoming serial event: " + command + "; currently in queue: "
@@ -118,6 +118,12 @@ public class SerialPortCommunicator {
 
     public interface SerialThingListener {
         void onFound(SerialThing thing);
+
+        /**
+         * @return <code>false</code> if the thing with the given port is already discovered, otherwise
+         *         <code>true</code>
+         */
+        boolean isNew(String port);
     }
 
     public interface SerialThing {
@@ -171,19 +177,19 @@ public class SerialPortCommunicator {
         String[] ports = findAllPorts();
 
         for (String port : ports) {
-            SerialPort currPort = new SerialPort(port);
+            SerialPort serialPort = new SerialPort(port);
 
             try {
-                if (!currPort.isOpened() && currPort.openPort()) {
-                    LOG.info("searchSerialThings: serial thing found at port " + currPort.getPortName()
+                if (!serialPort.isOpened() && listener.isNew(serialPort.getPortName()) && serialPort.openPort()) {
+                    LOG.info("searchSerialThings: serial thing found at port " + serialPort.getPortName()
                             + " send identify request...");
-                    identifySerialDevice(currPort, listener, supportedThingTypes);
-                    serialThings.add(currPort.getPortName());
+                    identifySerialDevice(serialPort, listener, supportedThingTypes);
+                    serialThings.add(serialPort.getPortName());
                 } else {
-                    LOG.info("searchSerialThings: port " + currPort.getPortName() + " currently in use -> ignore");
+                    LOG.info("searchSerialThings: port " + serialPort.getPortName() + " currently in use -> ignore");
                 }
             } catch (SerialPortException e) {
-                LOG.info("searchSerialThings: port " + currPort.getPortName() + " currently in use -> ignore");
+                LOG.info("searchSerialThings: port " + serialPort.getPortName() + " currently in use -> ignore");
             }
         }
         return serialThings;

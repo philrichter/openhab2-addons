@@ -7,10 +7,7 @@
  */
 package org.openhab.binding.serialroomsensor.internal;
 
-import static org.openhab.binding.serialroomsensor.SerialRoomSensorBindingConstants.THING_TYPE_ROOMSENSOR;
-
-import java.util.Collections;
-import java.util.Set;
+import static org.openhab.binding.serialroomsensor.SerialRoomSensorBindingConstants.*;
 
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
@@ -26,11 +23,9 @@ import org.openhab.binding.serialroomsensor.handler.SerialRoomSensorHandler;
  */
 public class SerialRoomSensorHandlerFactory extends BaseThingHandlerFactory {
 
-    private final static Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_ROOMSENSOR);
-
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
-        return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
+        return SUPPORTED_THING_TYPES.contains(thingTypeUID);
     }
 
     @Override
@@ -39,6 +34,8 @@ public class SerialRoomSensorHandlerFactory extends BaseThingHandlerFactory {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (thingTypeUID.equals(THING_TYPE_ROOMSENSOR)) {
+            return new SerialRoomSensorHandler(thing);
+        } else if (thingTypeUID.equals(THING_TYPE_DOORBELL)) {
             return new SerialRoomSensorHandler(thing);
         }
 

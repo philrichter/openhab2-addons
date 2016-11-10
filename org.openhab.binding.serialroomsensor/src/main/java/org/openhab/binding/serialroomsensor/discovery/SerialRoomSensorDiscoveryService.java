@@ -43,7 +43,6 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
     @Override
     protected synchronized void stopScan() {
         super.stopScan();
-        removeOlderResults(getTimestampOfLastScan());
     }
 
     /**
@@ -85,7 +84,6 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
     private synchronized void scan() {
 
         HashMap<String, SerialThing> oldDiscoveredThings = new HashMap<>(discoveredThings);
-        discoveredThings.clear();
 
         LOG.error("scan: oldDiscoveredThings.size = " + oldDiscoveredThings.size() + ", discoveredThings.size = "
                 + discoveredThings.size());
@@ -98,12 +96,20 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
                         discoveredThings.put(thing.getPort(), thing);
                         LOG.debug("thing discovered: " + thing.getThingUID());
                     }
+
+                    @Override
+                    public boolean isNew(String port) {
+                        boolean isNew = !oldDiscoveredThings.containsKey(port);
+                        LOG.debug("isNew: " + port + " = " + isNew);
+                        return isNew;
+                    }
                 });
 
-        for (Entry<String, SerialThing> discoverdThing : oldDiscoveredThings.entrySet()) {
-            if (!serialThings.contains(discoverdThing.getKey())) {
-                thingRemoved(discoverdThing.getValue().getThingUID());
-                LOG.debug("thing removed: " + discoverdThing.getValue().getThingUID());
+        for (Entry<String, SerialThing> discoveredThing : oldDiscoveredThings.entrySet()) {
+            if (!serialThings.contains(discoveredThing.getKey())) {
+                thingRemoved(discoveredThing.getValue().getThingUID());
+                discoveredThings.remove(discoveredThing.getKey());
+                LOG.debug("thing removed: " + discoveredThing.getValue().getThingUID());
             }
         }
     }

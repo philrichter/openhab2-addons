@@ -57,8 +57,7 @@ void loop() {
 
   checkTypeIdRequested();
   
-  bool currentValuesRequested = isCurrentValuesRequested();
-  if (currentValuesRequested) {
+  if (isCurrentValuesRequested()) {
     lastBrightness = -1;
     lastHumidity = -1;
     lastTemperature = -1;
