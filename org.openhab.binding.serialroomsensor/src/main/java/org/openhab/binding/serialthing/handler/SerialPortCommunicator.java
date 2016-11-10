@@ -1,4 +1,4 @@
-package org.openhab.binding.serialroomsensor.handler;
+package org.openhab.binding.serialthing.handler;
 
 import java.io.IOException;
 import java.util.HashSet;

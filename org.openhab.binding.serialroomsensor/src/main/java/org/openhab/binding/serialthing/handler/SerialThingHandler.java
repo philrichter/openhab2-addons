@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.serialroomsensor.handler;
+package org.openhab.binding.serialthing.handler;
 
 import java.math.BigDecimal;
 import java.util.concurrent.ScheduledFuture;
@@ -20,29 +20,29 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
-import org.openhab.binding.serialroomsensor.SerialRoomSensorBindingConstants;
-import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialTestHandler;
-import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialThing;
+import org.openhab.binding.serialthing.SerialThingBindingConstants;
+import org.openhab.binding.serialthing.handler.SerialPortCommunicator.SerialTestHandler;
+import org.openhab.binding.serialthing.handler.SerialPortCommunicator.SerialThing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link SerialRoomSensorHandler} is responsible for handling commands, which are
+ * The {@link SerialThingHandler} is responsible for handling commands, which are
  * sent to one of the channels.
  *
  * @author Philipp - Initial contribution
  */
-public class SerialRoomSensorHandler extends BaseThingHandler {
+public class SerialThingHandler extends BaseThingHandler {
 
     private static final long CURRENTVALUES_DELAY = 2;
 
-    private static Logger LOG = LoggerFactory.getLogger(SerialRoomSensorHandler.class);
+    private static Logger LOG = LoggerFactory.getLogger(SerialThingHandler.class);
 
     private SerialPortCommunicator serialPortComm;
 
     private ScheduledFuture<?> refreshJob;
 
-    public SerialRoomSensorHandler(Thing thing) {
+    public SerialThingHandler(Thing thing) {
         super(thing);
     }
 
@@ -92,25 +92,25 @@ public class SerialRoomSensorHandler extends BaseThingHandler {
 
             @Override
             public void onTemperatureChanged(int temperature) {
-                updateState(new ChannelUID(getThing().getUID(), SerialRoomSensorBindingConstants.CHANNEL_TEMPERATURE),
+                updateState(new ChannelUID(getThing().getUID(), SerialThingBindingConstants.CHANNEL_TEMPERATURE),
                         new DecimalType(temperature));
             }
 
             @Override
             public void onHumidityChanged(int humidity) {
-                updateState(new ChannelUID(getThing().getUID(), SerialRoomSensorBindingConstants.CHANNEL_HUMIDITY),
+                updateState(new ChannelUID(getThing().getUID(), SerialThingBindingConstants.CHANNEL_HUMIDITY),
                         new PercentType(new BigDecimal(humidity)));
             }
 
             @Override
             public void onBrightnessChanged(int brightness) {
-                updateState(new ChannelUID(getThing().getUID(), SerialRoomSensorBindingConstants.CHANNEL_BRIGHTNESS),
+                updateState(new ChannelUID(getThing().getUID(), SerialThingBindingConstants.CHANNEL_BRIGHTNESS),
                         new PercentType(new BigDecimal(brightness)));
             }
 
             @Override
             public void onDoorbellPressed(boolean pressed) {
-                updateState(new ChannelUID(getThing().getUID(), SerialRoomSensorBindingConstants.CHANNEL_DOORBELL),
+                updateState(new ChannelUID(getThing().getUID(), SerialThingBindingConstants.CHANNEL_DOORBELL),
                         pressed ? OnOffType.ON : OnOffType.OFF);
             }
         };

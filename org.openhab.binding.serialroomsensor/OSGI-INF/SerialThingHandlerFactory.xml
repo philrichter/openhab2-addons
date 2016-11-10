@@ -8,9 +8,9 @@
     http://www.eclipse.org/legal/epl-v10.html
 
 -->
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="binding.serialroomsensor">
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="binding.serialthing">
 
-   <implementation class="org.openhab.binding.serialroomsensor.internal.SerialRoomSensorHandlerFactory"/>
+   <implementation class="org.openhab.binding.serialthing.internal.SerialThingHandlerFactory"/>
 
    <service>
       <provide interface="org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory"/>

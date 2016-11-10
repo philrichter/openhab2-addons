@@ -8,9 +8,9 @@
     http://www.eclipse.org/legal/epl-v10.html
 
 -->
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" modified="modified" name="org.openhab.binding.serialroomsensor.SerialRoomSensorDiscoveryService">
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" modified="modified" name="org.openhab.binding.serialthing.SerialThingDiscoveryService">
 
-   <implementation class="org.openhab.binding.serialroomsensor.discovery.SerialRoomSensorDiscoveryService" />
+   <implementation class="org.openhab.binding.serialthing.discovery.SerialThingDiscoveryService" />
    <service>
       <provide interface="org.eclipse.smarthome.config.discovery.DiscoveryService"/>
    </service>

@@ -1,4 +1,4 @@
-package org.openhab.binding.serialroomsensor.discovery;
+package org.openhab.binding.serialthing.discovery;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,16 +11,16 @@ import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
 import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.openhab.binding.serialroomsensor.SerialRoomSensorBindingConstants;
-import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator;
-import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialThing;
-import org.openhab.binding.serialroomsensor.handler.SerialPortCommunicator.SerialThingListener;
+import org.openhab.binding.serialthing.SerialThingBindingConstants;
+import org.openhab.binding.serialthing.handler.SerialPortCommunicator;
+import org.openhab.binding.serialthing.handler.SerialPortCommunicator.SerialThing;
+import org.openhab.binding.serialthing.handler.SerialPortCommunicator.SerialThingListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
+public class SerialThingDiscoveryService extends AbstractDiscoveryService {
 
-    private static Logger LOG = LoggerFactory.getLogger(SerialRoomSensorDiscoveryService.class);
+    private static Logger LOG = LoggerFactory.getLogger(SerialThingDiscoveryService.class);
 
     private final static int INITIAL_DELAY = 15;
     private final static int SCAN_INTERVAL = 10;
@@ -30,8 +30,8 @@ public class SerialRoomSensorDiscoveryService extends AbstractDiscoveryService {
 
     private ScheduledFuture<?> scanningJob;
 
-    public SerialRoomSensorDiscoveryService() throws IllegalArgumentException {
-        super(SerialRoomSensorBindingConstants.SUPPORTED_THING_TYPES, DISCOVER_TIMEOUT, true);
+    public SerialThingDiscoveryService() throws IllegalArgumentException {
+        super(SerialThingBindingConstants.SUPPORTED_THING_TYPES, DISCOVER_TIMEOUT, true);
         activate(null);
     }
 

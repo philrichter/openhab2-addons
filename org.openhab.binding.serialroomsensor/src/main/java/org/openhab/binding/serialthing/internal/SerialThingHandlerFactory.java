@@ -5,23 +5,23 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.serialroomsensor.internal;
+package org.openhab.binding.serialthing.internal;
 
-import static org.openhab.binding.serialroomsensor.SerialRoomSensorBindingConstants.*;
+import static org.openhab.binding.serialthing.SerialThingBindingConstants.*;
 
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
-import org.openhab.binding.serialroomsensor.handler.SerialRoomSensorHandler;
+import org.openhab.binding.serialthing.handler.SerialThingHandler;
 
 /**
- * The {@link SerialRoomSensorHandlerFactory} is responsible for creating things and thing
+ * The {@link SerialThingHandlerFactory} is responsible for creating things and thing
  * handlers.
  *
  * @author Philipp - Initial contribution
  */
-public class SerialRoomSensorHandlerFactory extends BaseThingHandlerFactory {
+public class SerialThingHandlerFactory extends BaseThingHandlerFactory {
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -34,9 +34,9 @@ public class SerialRoomSensorHandlerFactory extends BaseThingHandlerFactory {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (thingTypeUID.equals(THING_TYPE_ROOMSENSOR)) {
-            return new SerialRoomSensorHandler(thing);
+            return new SerialThingHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_DOORBELL)) {
-            return new SerialRoomSensorHandler(thing);
+            return new SerialThingHandler(thing);
         }
 
         return null;

@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.serialroomsensor;
+package org.openhab.binding.serialthing;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +18,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
  *
  * @author Philipp - Initial contribution
  */
-public class SerialRoomSensorBindingConstants {
+public class SerialThingBindingConstants {
 
     public static final String BINDING_ID = "serialroomsensor";
 
