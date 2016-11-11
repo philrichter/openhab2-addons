@@ -216,7 +216,7 @@ public class SerialPortCommunicator {
         }
     }
 
-    private static void requestTypeId(SerialPort currPort) {
+    private static void requestTypeId(final SerialPort currPort) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -231,8 +231,8 @@ public class SerialPortCommunicator {
         }).start();
     }
 
-    private static SerialListener createSerialEventListener(SerialPort currPort, SerialThingListener listener,
-            Set<ThingTypeUID> supportedThingTypes) {
+    private static SerialListener createSerialEventListener(final SerialPort currPort,
+            final SerialThingListener listener, final Set<ThingTypeUID> supportedThingTypes) {
 
         return new SerialListener() {
 
@@ -331,9 +331,9 @@ public class SerialPortCommunicator {
         listener.setSerialPort(port);
     }
 
-    private static SerialThing createSerialThing(SerialPort currPort, ThingTypeUID typeUid) {
+    private static SerialThing createSerialThing(final SerialPort currPort, final ThingTypeUID typeUid) {
 
-        final ThingUID thingUid = new ThingUID(typeUid, currPort.getPortName());
+        final ThingUID thingUid = new ThingUID(typeUid, createUid(currPort.getPortName()));
 
         return new SerialThing() {
 
@@ -351,7 +351,7 @@ public class SerialPortCommunicator {
 
             @Override
             public String getId() {
-                return /* getTypeUID().getId() + ":" + TODO */currPort.getPortName();
+                return getTypeUID().getId();
             }
 
             @Override
@@ -364,6 +364,10 @@ public class SerialPortCommunicator {
                 return typeUid;
             }
         };
+    }
+
+    private static String createUid(final String value) {
+        return value.replaceAll("[^a-zA-Z0-9_-]", "");
     }
 
     /**

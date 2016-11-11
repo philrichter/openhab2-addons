@@ -13,14 +13,14 @@ import java.util.Set;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 
 /**
- * The {@link SerialRoomSensorBinding} class defines common constants, which are
+ * The {@link SerialThingBinding} class defines common constants, which are
  * used across the whole binding.
  *
  * @author Philipp - Initial contribution
  */
 public class SerialThingBindingConstants {
 
-    public static final String BINDING_ID = "serialroomsensor";
+    public static final String BINDING_ID = "serialthing";
 
     // List of all Thing Type UIDs
     public final static ThingTypeUID THING_TYPE_ROOMSENSOR = new ThingTypeUID(BINDING_ID, "roomsensor");

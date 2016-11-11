@@ -10,10 +10,10 @@
   </parent>
 
   <groupId>org.openhab.binding</groupId>
-  <artifactId>org.openhab.binding.serialroomsensor</artifactId>
+  <artifactId>org.openhab.binding.serialthing</artifactId>
   <version>2.0.0-SNAPSHOT</version>
 
-  <name>SerialRoomSensor Binding</name>
+  <name>SerialThing Binding</name>
   <packaging>eclipse-plugin</packaging>
 
 </project>

@@ -83,10 +83,11 @@ public class SerialThingDiscoveryService extends AbstractDiscoveryService {
 
     private synchronized void scan() {
 
-        HashMap<String, SerialThing> oldDiscoveredThings = new HashMap<>(discoveredThings);
+        final HashMap<String, SerialThing> oldDiscoveredThings = new HashMap<>(discoveredThings);
 
-        LOG.error("scan: oldDiscoveredThings.size = " + oldDiscoveredThings.size() + ", discoveredThings.size = "
-                + discoveredThings.size());
+        // LOG.debug("scan: oldDiscoveredThings.size = " + oldDiscoveredThings.size() + ", discoveredThings.size = "
+        // + discoveredThings.size());
+
         Set<String> serialThings = SerialPortCommunicator.searchSerialThings(getSupportedThingTypes(),
                 new SerialThingListener() {
 
