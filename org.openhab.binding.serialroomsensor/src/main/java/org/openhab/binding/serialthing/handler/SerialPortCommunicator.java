@@ -1,25 +1,23 @@
 package org.openhab.binding.serialthing.handler;
 
+import static org.openhab.binding.serialthing.SerialThingBindingConstants.LINE_DELIMITER;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TooManyListenersException;
 
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.thing.ThingUID;
+import org.openhab.binding.serialthing.handler.SerialListenerImpl.SerialThingListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gnu.io.PortInUseException;
-import gnu.io.UnsupportedCommOperationException;
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
 public class SerialPortCommunicator {
-
-    private static final String LINE_DELIMITER = "\r\n";
 
     private static final Logger LOG = LoggerFactory.getLogger(SerialPortCommunicator.class);
 
@@ -116,31 +114,6 @@ public class SerialPortCommunicator {
         void onDoorbellPressed(boolean pressed);
     }
 
-    public interface SerialThingListener {
-        void onFound(SerialThing thing);
-
-        /**
-         * @return <code>false</code> if the thing with the given port is already discovered, otherwise
-         *         <code>true</code>
-         */
-        boolean isNew(String port);
-    }
-
-    public interface SerialThing {
-        String PORT = "port";
-
-        String getId();
-
-        String getLabel();
-
-        /** The serial port name. */
-        String getPort();
-
-        ThingUID getThingUID();
-
-        ThingTypeUID getTypeUID();
-    }
-
     /** This handler gets the value of an incoming serial event. */
     private SerialTestHandler handler;
 
@@ -176,11 +149,12 @@ public class SerialPortCommunicator {
 
         String[] ports = findAllPorts();
 
+        SerialPort serialPort;
         for (String port : ports) {
-            SerialPort serialPort = new SerialPort(port);
+            serialPort = new SerialPort(port);
 
             try {
-                if (!serialPort.isOpened() && listener.isNew(serialPort.getPortName()) && serialPort.openPort()) {
+                if (listener.isNew(serialPort.getPortName()) && serialPort.openPort()) {
                     LOG.info("searchSerialThings: serial thing found at port " + serialPort.getPortName()
                             + " send identify request...");
                     identifySerialDevice(serialPort, listener, supportedThingTypes);
@@ -195,20 +169,11 @@ public class SerialPortCommunicator {
         return serialThings;
     }
 
-    private static ThingTypeUID getSupportedTypeUid(String typeId, Set<ThingTypeUID> supportedThingTypes) {
-        for (ThingTypeUID thingTypeUID : supportedThingTypes) {
-            if (thingTypeUID.getId().equals(typeId)) {
-                return thingTypeUID;
-            }
-        }
-        return null;
-    }
-
     private static void identifySerialDevice(SerialPort currPort, SerialThingListener listener,
             Set<ThingTypeUID> supportedThingTypes) {
 
         try {
-            initializePortAccess(currPort, createSerialEventListener(currPort, listener, supportedThingTypes));
+            initializePortAccess(currPort, new SerialListenerImpl(currPort, listener, supportedThingTypes));
             requestTypeId(currPort);
 
         } catch (Exception e) {
@@ -231,91 +196,6 @@ public class SerialPortCommunicator {
         }).start();
     }
 
-    private static SerialListener createSerialEventListener(final SerialPort currPort,
-            final SerialThingListener listener, final Set<ThingTypeUID> supportedThingTypes) {
-
-        return new SerialListener() {
-
-            private final static int TIMEOUT_IDENTIFICATION = 30000;
-
-            private String serialInputBuffer = "";
-            private SerialPort serialPort = null;
-
-            private long startTime = -1;
-
-            @Override
-            public void serialEvent(SerialPortEvent oEvent) {
-
-                // terminate identification after timeout
-                if (startTime == -1) {
-                    startTime = System.currentTimeMillis();
-                } else if (startTime + TIMEOUT_IDENTIFICATION < System.currentTimeMillis()) {
-                    close();
-                    return;
-                }
-
-                if (oEvent.isRXCHAR()) {
-                    try {
-
-                        byte[] buffer;
-                        while ((buffer = serialPort.readBytes()) != null) {
-
-                            serialInputBuffer += new String(buffer);
-
-                            int newLineIndex;
-                            while ((newLineIndex = serialInputBuffer.indexOf(LINE_DELIMITER)) > -1) {
-
-                                if (newLineIndex > -1) {
-
-                                    String command = serialInputBuffer.substring(0, newLineIndex);
-                                    serialInputBuffer = serialInputBuffer
-                                            .substring(command.length() + LINE_DELIMITER.length());
-
-                                    if (command.startsWith("TYPEID=")) {
-
-                                        ThingTypeUID typeUid = getSupportedTypeUid(parseTypeId(command),
-                                                supportedThingTypes);
-
-                                        if (typeUid != null) {
-                                            listener.onFound(createSerialThing(currPort, typeUid));
-                                        }
-                                        close();
-                                        return;
-                                    } else if (command.startsWith("LOG=")) {
-                                        LOG.debug(parseLogMessage(command));
-                                    } else {
-                                        LOG.debug("unknown incoming serial event: " + command + "; currently in queue: "
-                                                + serialInputBuffer);
-                                    }
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        LOG.error("error during serial input processing ", e);
-                    }
-                }
-            }
-
-            @Override
-            public void setSerialPort(SerialPort port) throws IOException {
-                serialPort = port;
-            }
-
-            @Override
-            public void close() {
-                if (serialPort != null) {
-                    try {
-                        serialPort.removeEventListener();
-                        serialPort.closePort();
-                    } catch (SerialPortException e) {
-                        LOG.error("error during close input stream", e);
-                    }
-                    serialPort = null;
-                }
-            }
-        };
-    }
-
     private static void initializePortAccess(SerialPort port, SerialListener listener)
             throws SerialPortException, IOException {
 
@@ -329,45 +209,6 @@ public class SerialPortCommunicator {
         port.addEventListener(listener);
 
         listener.setSerialPort(port);
-    }
-
-    private static SerialThing createSerialThing(final SerialPort currPort, final ThingTypeUID typeUid) {
-
-        final ThingUID thingUid = new ThingUID(typeUid, createUid(currPort.getPortName()));
-
-        return new SerialThing() {
-
-            @Override
-            public String getPort() {
-                return currPort.getPortName();
-            }
-
-            @Override
-            public String getLabel() {
-                // TODO Zugriff auf Label aus thing-types.xml aktuell nicht möglich
-                return ("roomsensor".equals(getTypeUID().getId()) ? "Raumsensor" : "Türklingel") + " an Port "
-                        + getPort();
-            }
-
-            @Override
-            public String getId() {
-                return getTypeUID().getId();
-            }
-
-            @Override
-            public ThingUID getThingUID() {
-                return thingUid;
-            }
-
-            @Override
-            public ThingTypeUID getTypeUID() {
-                return typeUid;
-            }
-        };
-    }
-
-    private static String createUid(final String value) {
-        return value.replaceAll("[^a-zA-Z0-9_-]", "");
     }
 
     /**
@@ -423,10 +264,6 @@ public class SerialPortCommunicator {
 
     private boolean parseButtonPressed(String command) {
         return command.endsWith(Boolean.TRUE.toString());
-    }
-
-    private static String parseTypeId(String inputLine) {
-        return inputLine.substring(inputLine.indexOf("=") + 1);
     }
 
     private int parseBrightness(String inputLine) {

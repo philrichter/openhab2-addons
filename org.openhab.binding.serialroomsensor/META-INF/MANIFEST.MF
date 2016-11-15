@@ -21,4 +21,3 @@ Import-Package:
 Service-Component: OSGI-INF/*.xml
 Export-Package: org.openhab.binding.serialthing.handler,
  org.openhab.binding.serialthing
-Require-Bundle: org.openhab.io.transport.serial

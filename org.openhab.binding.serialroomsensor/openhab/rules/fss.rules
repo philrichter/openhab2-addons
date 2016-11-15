@@ -1,0 +1,124 @@
+rule NormalLightSwitchedOn
+when
+	Item FF_CR_NormalLight received command ON or
+then
+	sendCommand(FF_CR_LightTemperature, 100);
+	sendCommand(FF_CR_LightBrightness, 80);
+	postUpdate(FF_CR_WorkLight, OFF)
+	postUpdate(FF_CR_MovieLight, OFF)
+end
+
+rule WorkLightSwitchedOn
+when
+	Item FF_CR_WorkLight received command ON
+then
+	
+//	var HSBType light = new HSBType(hue, sat, bright);
+	
+	sendCommand(FF_CR_LightTemperature, 0);
+	sendCommand(FF_CR_LightBrightness, 100);
+	postUpdate(FF_CR_NormalLight, OFF)
+	postUpdate(FF_CR_MovieLight, OFF)
+	postUpdate(FF_CR_AllOff, OFF)
+end
+
+rule MovieLightSwitchedOn
+when
+	Item FF_CR_MovieLight received command ON
+then
+//	var HSBType light = new HSBType(hue, sat, bright);
+	sendCommand(FF_CR_Color, new HSBType("317,99,50"));
+	postUpdate(FF_CR_NormalLight, OFF)
+	postUpdate(FF_CR_WorkLight, OFF)
+	postUpdate(FF_CR_AllOff, OFF)
+end
+
+rule RockMusicSwitchedOn
+when 
+	Item FF_CR_RockMusic received command ON
+then
+	sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/rock.mp3")
+	// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/rock.mp3")
+	postUpdate(FF_CR_PopMusic, OFF)
+	postUpdate(FF_CR_AllOff, OFF)
+end
+
+rule PopMusicSwitchedOn
+when 
+	Item FF_CR_PopMusic received command ON
+then
+	sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/pop.mp3"
+	// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/pop.mp3"
+	postUpdate(FF_CR_RockMusic, OFF)
+	postUpdate(FF_CR_AllOff, OFF)
+end
+
+rule AllOff
+when 
+	Item FF_CR_AllOff received command ON
+then
+	sendCommand(FF_CR_Stop, ON)
+	sendCommand(FF_CR_LightBrightness, 0);
+	postUpdate(FF_CR_NormalLight, OFF)
+	postUpdate(FF_CR_MovieLight, OFF)
+	postUpdate(FF_CR_WorkLight, OFF)
+	postUpdate(FF_CR_RockMusic, OFF)
+	postUpdate(FF_CR_PopMusic, OFF)
+end
+
+rule DoorBellRings
+when
+	Item GF_EA_Doorbell received command ON or
+	Channel "amazondashbutton:dashbutton:50-f5-da-79-96-eb:press" triggered
+then
+	sendCommand(GF_EA_DoorBellSound, "http://NB-P-RICHTER:8081/static/doorbell.mp3")	
+	// sendCommand(GF_EA_DoorBellSound, "http://NB-P-RICHTER:8080/static/doorbell.mp3")
+	sendCommand(FF_CR_DoorbellL, 'SELECT')
+	// postUpdate(GF_EA_Doorbell, OFF)
+end
+
+rule VoiceCommandReceived
+when
+	Item VoiceCommand received command
+then
+	var String command = VoiceCommand.state.toString.toLowerCase
+	if (command.equals("licht an")) {
+		sendCommand(FF_CR_NormalLight, ON)
+	} else if (command.equals("arbeitslicht an")) {
+		sendCommand(FF_CR_WorkLight, ON)
+	} else if (command.equals("filmlicht an") || command.equals("film licht an")) {
+		sendCommand(FF_CR_MovieLight, ON)
+	} else if (command.equals("spiele rock")) {
+		sendCommand(FF_CR_RockMusic, ON)
+	} else if (command.equals("spiele pop")) {
+		sendCommand(FF_CR_PopMusic, ON)
+	} else if (command.equals("alles aus")) {
+		sendCommand(FF_CR_AllOff, ON)
+	} else if (command.equals("es klingelt")) {
+		sendCommand(GF_EA_Doorbell, ON)
+	}
+end	
+	
+rule AfterOpenHABStarted
+when
+	System started
+then
+	sendCommand(FF_CR_DoorBellVolume, 45)
+end
+
+//
+//rule DoorBellRings
+//when 
+//	Item enDoorBell received command ON
+//then
+//	sendCommand(enDoorBell, "jemand klingelt")
+//	sendCommand(lrSonosNotif, "http://192.168.100.57:8080/static/doorbell.mp3")
+//	sendCommand(enDoorBell, "-")
+//end
+//
+//rule lrSonosPlayPauseChanged
+//when 
+//	Item lrSonosPlayPause received command OFF
+//then
+//	sendCommand(lrSonosNotif, "http://192.168.100.57:8080/static/doorbell.mp3")
+//end

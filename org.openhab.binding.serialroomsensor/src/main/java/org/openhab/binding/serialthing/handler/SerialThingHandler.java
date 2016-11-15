@@ -7,13 +7,11 @@
  */
 package org.openhab.binding.serialthing.handler;
 
-import java.math.BigDecimal;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
-import org.eclipse.smarthome.core.library.types.PercentType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
@@ -21,8 +19,8 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.serialthing.SerialThingBindingConstants;
+import org.openhab.binding.serialthing.handler.SerialListenerImpl.SerialThing;
 import org.openhab.binding.serialthing.handler.SerialPortCommunicator.SerialTestHandler;
-import org.openhab.binding.serialthing.handler.SerialPortCommunicator.SerialThing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,13 +97,13 @@ public class SerialThingHandler extends BaseThingHandler {
             @Override
             public void onHumidityChanged(int humidity) {
                 updateState(new ChannelUID(getThing().getUID(), SerialThingBindingConstants.CHANNEL_HUMIDITY),
-                        new PercentType(new BigDecimal(humidity)));
+                        new DecimalType(humidity));
             }
 
             @Override
             public void onBrightnessChanged(int brightness) {
                 updateState(new ChannelUID(getThing().getUID(), SerialThingBindingConstants.CHANNEL_BRIGHTNESS),
-                        new PercentType(new BigDecimal(brightness)));
+                        new DecimalType(brightness));
             }
 
             @Override

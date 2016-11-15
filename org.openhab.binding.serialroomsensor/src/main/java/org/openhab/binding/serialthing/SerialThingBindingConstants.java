@@ -43,4 +43,6 @@ public class SerialThingBindingConstants {
 
     public final static String PARAM_SERIALPORT = "serialport";
     public final static String PARAM_REFRESHRATE = "refreshrate";
+
+    public final static String LINE_DELIMITER = "\r\n";
 }

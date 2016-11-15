@@ -1,0 +1,19 @@
+.space-6 {
+  max-height: 1px;
+  min-height: 1px;
+  overflow: hidden;
+  margin: 12px 0;
+  margin: 6px 0 5px;
+}
+
+.item:hover img {
+   	 cursor: pointer;
+}
+
+.item:active img {
+    -webkit-transform:scale(.98); /* Safari and Chrome */
+    -moz-transform:scale(.98); /* Firefox */
+    -ms-transform:scale(.98); /* IE 9 */
+    -o-transform:scale(.98); /* Opera */
+     transform:scale(.98);
+}

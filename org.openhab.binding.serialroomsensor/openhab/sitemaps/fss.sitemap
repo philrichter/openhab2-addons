@@ -1,0 +1,11 @@
+sitemap fss label="FSS CONSULTING GMBH" {
+	/* 
+	Frame label="Status" {
+		
+	}*/
+	
+	Frame {
+		Group item=FF icon="firstfloor"
+		Switch label="Eingangsbereich" item=GF_EA_Doorbell icon="groundfloor" mappings=[ON="Klingeln"]
+	}
+}

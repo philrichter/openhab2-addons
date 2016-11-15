@@ -22,9 +22,6 @@ const int PIN_IN_HUMI_TEMP = 8;
 // LED to signal a refresh of the sensors
 const int PIN_OUT_REFRESH = 13;
 
-// Button
-const int PIN_IN_BUTTON = 9;
-
 // refresh rate in seconds. Default: no specific rate, but if a value is changed
 int refreshRate = -1;
 
@@ -44,10 +41,6 @@ void setup() {
   pinMode(PIN_IN_BRIGHTNESS, INPUT);
   pinMode(PIN_IN_HUMI_TEMP, OUTPUT);
   pinMode(PIN_OUT_REFRESH, OUTPUT);
-  
-
-  // Button
-  pinMode(PIN_IN_BUTTON, INPUT);
   
   Serial.begin(9600);
 }
@@ -97,17 +90,6 @@ void checkTypeIdRequested() {
     writeLog("type id requested. send type id...");
 		writeTypeIdToSerial();
 	}
-
-//  int buttonState = digitalRead(PIN_IN_BUTTON);
-//
-//  if (buttonState == HIGH && buttonStateOld != HIGH) {
-//    writeLog("button pressed");
-//    writeButtonPressedToSerial();
-//    buttonStateOld = HIGH;
-//  } else if (buttonState == LOW && buttonStateOld != LOW) {
-//    writeLog("button unpressed");
-//    buttonStateOld = LOW;
-//  }
 }
 
 void serialEvent() {
@@ -216,10 +198,6 @@ void writeHumidityToSerial(byte humidity) {
 void writeTemperatureToSerial(byte temperature) {
   writeToSerial(SERIALID_OUT_TEMPERATURE, (String) temperature);
 }
-
-//void writeButtonPressedToSerial() {
-//  writeToSerial(SERIALID_OUT_BUTTONPRESSED, "true");
-//}
 
 void writeTypeIdToSerial() {
 	writeToSerial(SERIALID_OUT_TYPEID, "roomsensor");
