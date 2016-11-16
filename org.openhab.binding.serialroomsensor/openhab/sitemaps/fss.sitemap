@@ -1,11 +1,39 @@
 sitemap fss label="FSS CONSULTING GMBH" {
-	/* 
-	Frame label="Status" {
-		
-	}*/
+	
+	Frame label="Schnellzugriff" {
+    	Slider item=FF_CR_MusicVolume label="Sonos - Volume [%.1f %%]" 
+		Switch item=FF_CR_AllOff label="" icon="settings" mappings=[ON="Alles ausschalten"]        	
+	}
 	
 	Frame {
-		Group item=FF icon="firstfloor"
-		Switch label="Eingangsbereich" item=GF_EA_Doorbell icon="groundfloor" mappings=[ON="Klingeln"]
+//		Group item=FF icon="firstfloor"
+		Text label="Obergeschoss" icon="firstfloor" {
+			Frame label="Besprechungsraum" icon="office" {
+				Frame label="Raumstatus" icon="office" {
+					Text item=FF_CR_Temperature valuecolor=[>25="red",>18="green",<=18="blue"]
+					Text item=FF_CR_Humidity valuecolor=[>80="red",<=80="green"]
+					Text item=FF_CR_Brightness
+				}
+				Frame label="Licht" {
+					Switch item=FF_CR_LightScene label="Profil" mappings=[0=Aus, 1=Normal, 2=Arbeit, 3=Hintergrund]
+					Slider item=FF_CR_LightBrightness icon="slider"
+					Slider item=FF_CR_LightTemperature
+				}
+				Frame label="Musik" {
+					Switch item=FF_CR_MusicGenre label="Genre" mappings=[0=Aus, 1=Rock, 2=Pop]
+					Slider item=FF_CR_MusicVolume
+					
+				}
+					Group item=FF_CR_Music
+				Switch item=FF_CR_AllOff label="" icon="settings" mappings=[ON="Alles ausschalten"]
+			}
+		}
+                     
+		Switch label="Eingangstür" item=GF_EA_Doorbell icon="door" mappings=[ON="Klingeln"]
 	}
-}
+//	
+//	Frame label="Wetter" {
+//		
+//	}
+
+} 

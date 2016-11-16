@@ -1,75 +1,186 @@
-rule NormalLightSwitchedOn
+// Regeln werden mit Hilfe von Xtend definiert  
+
+
+rule BrightnessChanged
 when
-	Item FF_CR_NormalLight received command ON or
+	Item FF_CR_Brightness changed
 then
-	sendCommand(FF_CR_LightTemperature, 100);
-	sendCommand(FF_CR_LightBrightness, 80);
-	postUpdate(FF_CR_WorkLight, OFF)
-	postUpdate(FF_CR_MovieLight, OFF)
+	callScript("nightLightOrOff")
 end
 
-rule WorkLightSwitchedOn
+rule LightSceneChangedOn
 when
-	Item FF_CR_WorkLight received command ON
+	Item FF_CR_LightScene received command
 then
+
+	var Number scene = FF_CR_LightScene.state as DecimalType
 	
-//	var HSBType light = new HSBType(hue, sat, bright);
+	// Normal light
+	if (scene == 1) {
+		sendCommand(FF_CR_Effect, OFF)
+		sendCommand(FF_CR_LightTemperature, 100);
+		sendCommand(FF_CR_LightBrightness, 80);
+		postUpdate(FF_CR_WorkLight, OFF)
+		postUpdate(FF_CR_MovieLight, OFF)
+		postUpdate(FF_CR_AllOff, OFF)
+	// Work light
+	} else if (scene == 2) {
+		sendCommand(FF_CR_Effect, OFF)
+		sendCommand(FF_CR_LightTemperature, 0);
+		sendCommand(FF_CR_LightBrightness, 100);
+		postUpdate(FF_CR_NormalLight, OFF)
+		postUpdate(FF_CR_MovieLight, OFF)
+		postUpdate(FF_CR_AllOff, OFF)
+	// Passive light
+	} else if (scene == 3) {
+		sendCommand(FF_CR_Effect, ON)
+		sendCommand(FF_CR_LightBrightness, 50);
+		sendCommand(FF_CR_LightTemperature, 0);
+		postUpdate(FF_CR_NormalLight, OFF)
+		postUpdate(FF_CR_WorkLight, OFF)
+		postUpdate(FF_CR_AllOff, OFF)
+	// light off
+	} else if (scene == 0) {
+		callScript("nightLightOrOff")
+	}
+end
+
+//rule NormalLightSwitchedOn
+//when
+//	Item FF_CR_NormalLight received command
+//then
+//	if (FF_CR_NormalLight.state == ON) {
+//		sendCommand(FF_CR_Effect, OFF)
+//		sendCommand(FF_CR_LightTemperature, 100);
+//		sendCommand(FF_CR_LightBrightness, 80);
+//		postUpdate(FF_CR_WorkLight, OFF)
+//		postUpdate(FF_CR_MovieLight, OFF)
+//	} else {
+//		sendCommand(FF_CR_LightBrightness, 0);
+//	}
+//end
+
+rule DashButtonPushed
+when 
+	Channel "amazondashbutton:dashbutton:50-f5-da-79-96-eb:press" triggered	
+then
+	if (FF_CR_LightScene.state > 0) {
+		sendCommand(FF_CR_LightScene, 0)
+		postUpdate(FF_CR_LightScene, 0)
+	} else {
+		sendCommand(FF_CR_LightScene, 1)
+		postUpdate(FF_CR_LightScene, 1)
+	}
+end
+
+//rule WorkLightSwitchedOn
+//when
+//	Item FF_CR_WorkLight received command
+//then
+//	if (FF_CR_WorkLight.state == ON) {
+//		sendCommand(FF_CR_Effect, OFF)
+//		sendCommand(FF_CR_LightTemperature, 0);
+//		sendCommand(FF_CR_LightBrightness, 100);
+//		postUpdate(FF_CR_NormalLight, OFF)
+//		postUpdate(FF_CR_MovieLight, OFF)
+//		postUpdate(FF_CR_AllOff, OFF)
+//	} else {
+//		sendCommand(FF_CR_LightBrightness, 0);
+//	}
+//end
+
+//rule MovieLightSwitchedOn
+//when
+//	Item FF_CR_MovieLight received command
+//then
+//	if (FF_CR_MovieLight.state == ON) {
+//		sendCommand(FF_CR_Effect, ON)
+//		sendCommand(FF_CR_LightBrightness, 50);
+//		sendCommand(FF_CR_LightTemperature, 0);
+//		postUpdate(FF_CR_NormalLight, OFF)
+//		postUpdate(FF_CR_WorkLight, OFF)
+//		postUpdate(FF_CR_AllOff, OFF)
+//	} else {
+//		sendCommand(FF_CR_Effect, OFF) 
+//		sendCommand(FF_CR_LightBrightness, 0);
+//	}
+//end
+
+rule MusicGenreChanged
+when 
+	Item FF_CR_MusicGenre received command
+then
+
+	var Number genre = FF_CR_MusicGenre.state as DecimalType
 	
-	sendCommand(FF_CR_LightTemperature, 0);
-	sendCommand(FF_CR_LightBrightness, 100);
-	postUpdate(FF_CR_NormalLight, OFF)
-	postUpdate(FF_CR_MovieLight, OFF)
-	postUpdate(FF_CR_AllOff, OFF)
+	// Off
+	if (genre == 0) {
+		sendCommand(FF_CR_Stop, ON)
+	// Rock
+	} else if (genre == 1) {
+		sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/rock.mp3")
+		// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/rock.mp3")
+		postUpdate(FF_CR_PopMusic, OFF)
+		postUpdate(FF_CR_AllOff, OFF)
+	// Poop
+	} else if (genre == 2) {
+		sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/pop.mp3"
+		// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/pop.mp3"
+		postUpdate(FF_CR_RockMusic, OFF)
+		postUpdate(FF_CR_AllOff, OFF)
+	}
 end
 
-rule MovieLightSwitchedOn
-when
-	Item FF_CR_MovieLight received command ON
-then
-//	var HSBType light = new HSBType(hue, sat, bright);
-	sendCommand(FF_CR_Color, new HSBType("317,99,50"));
-	postUpdate(FF_CR_NormalLight, OFF)
-	postUpdate(FF_CR_WorkLight, OFF)
-	postUpdate(FF_CR_AllOff, OFF)
-end
-
-rule RockMusicSwitchedOn
-when 
-	Item FF_CR_RockMusic received command ON
-then
-	sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/rock.mp3")
-	// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/rock.mp3")
-	postUpdate(FF_CR_PopMusic, OFF)
-	postUpdate(FF_CR_AllOff, OFF)
-end
-
-rule PopMusicSwitchedOn
-when 
-	Item FF_CR_PopMusic received command ON
-then
-	sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/pop.mp3"
-	// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/pop.mp3"
-	postUpdate(FF_CR_RockMusic, OFF)
-	postUpdate(FF_CR_AllOff, OFF)
-end
+//rule RockMusicSwitchedOn
+//when 
+//	Item FF_CR_RockMusic received command
+//then
+//	if (FF_CR_RockMusic.state == ON) {
+//		sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/rock.mp3")
+//		// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/rock.mp3")
+//		postUpdate(FF_CR_PopMusic, OFF)
+//		postUpdate(FF_CR_AllOff, OFF)
+//	} else {
+//		sendCommand(FF_CR_Stop, ON)
+//	}
+//end
+//
+//rule PopMusicSwitchedOn
+//when 
+//	Item FF_CR_PopMusic received command
+//then
+//	if (FF_CR_PopMusic.state == ON) {
+//		sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/pop.mp3"
+//		// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/pop.mp3"
+//		postUpdate(FF_CR_RockMusic, OFF)
+//		postUpdate(FF_CR_AllOff, OFF)
+//	} else {
+//		sendCommand(FF_CR_Stop, ON)
+//	}
+//end
 
 rule AllOff
 when 
 	Item FF_CR_AllOff received command ON
 then
 	sendCommand(FF_CR_Stop, ON)
-	sendCommand(FF_CR_LightBrightness, 0);
+	if (FF_CR_Effect.state == ON) {
+		sendCommand(FF_CR_Effect, OFF)
+	}
+	sendCommand(FF_CR_LightBrightness, 0)		
 	postUpdate(FF_CR_NormalLight, OFF)
 	postUpdate(FF_CR_MovieLight, OFF)
 	postUpdate(FF_CR_WorkLight, OFF)
 	postUpdate(FF_CR_RockMusic, OFF)
 	postUpdate(FF_CR_PopMusic, OFF)
+	postUpdate(FF_CR_LightScene, 0)
+	postUpdate(FF_CR_MusicGenre, 0)
 end
 
 rule DoorBellRings
 when
-	Item GF_EA_Doorbell received command ON or
-	Channel "amazondashbutton:dashbutton:50-f5-da-79-96-eb:press" triggered
+	Item GF_EA_Doorbell changed to ON//received command ON 
+//	Channel "serialthing_doorbell_COM4_doorbell" received command ON //changed from OFF to ON
 then
 	sendCommand(GF_EA_DoorBellSound, "http://NB-P-RICHTER:8081/static/doorbell.mp3")	
 	// sendCommand(GF_EA_DoorBellSound, "http://NB-P-RICHTER:8080/static/doorbell.mp3")
@@ -83,15 +194,17 @@ when
 then
 	var String command = VoiceCommand.state.toString.toLowerCase
 	if (command.equals("licht an")) {
-		sendCommand(FF_CR_NormalLight, ON)
+		sendCommand(FF_CR_LightScene, 1)
 	} else if (command.equals("arbeitslicht an")) {
-		sendCommand(FF_CR_WorkLight, ON)
+		sendCommand(FF_CR_LightScene, 2)
 	} else if (command.equals("filmlicht an") || command.equals("film licht an")) {
-		sendCommand(FF_CR_MovieLight, ON)
+		sendCommand(FF_CR_LightScene, 3)
 	} else if (command.equals("spiele rock")) {
-		sendCommand(FF_CR_RockMusic, ON)
+		sendCommand(FF_CR_MusicGenre, 1)
 	} else if (command.equals("spiele pop")) {
-		sendCommand(FF_CR_PopMusic, ON)
+		sendCommand(FF_CR_MusicGenre, 2)
+	} else if (command.equals("musik aus")) {
+		sendCommand(FF_CR_MusicGenre, 0)
 	} else if (command.equals("alles aus")) {
 		sendCommand(FF_CR_AllOff, ON)
 	} else if (command.equals("es klingelt")) {
@@ -104,6 +217,7 @@ when
 	System started
 then
 	sendCommand(FF_CR_DoorBellVolume, 45)
+	postUpdate(FF_CR_Scene, 0)
 end
 
 //

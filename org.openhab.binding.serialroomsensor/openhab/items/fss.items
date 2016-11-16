@@ -3,29 +3,33 @@ Group GF "Eingangsbereich" <groundfloor>
 
 Group FF_ConfRoom "Besprechungsraum" <sofa> (FF)
 
-String FF_CR_Brightness "Helligkeit" <sun> (FF_ConfRoom)
-String FF_CR_Temperature "Temperatur" <temperature> (FF_ConfRoom)
-String FF_CR_Humidity "Feuchtigkeit" <humidity> (FF_ConfRoom)
+Number FF_CR_Brightness "Helligkeit" <sun> (FF_ConfRoom) {channel="serialthing:roomsensor:COM3:brightness"}
+Number FF_CR_Temperature "Temperatur" <temperature> (FF_ConfRoom) {channel="serialthing:roomsensor:COM3:temperature"}
+Number FF_CR_Humidity "Feuchtigkeit" <humidity> (FF_ConfRoom) {channel="serialthing:roomsensor:COM3:humidity"}
 
 Switch FF_CR_NormalLight "Normales Licht" <light> (FF_ConfRoom)
 Switch FF_CR_WorkLight "Arbeitslicht" <office> (FF_ConfRoom)
 Switch FF_CR_MovieLight "Filmlicht" <dimmablelight-50> (FF_ConfRoom)
-Dimmer FF_CR_LightBrightness "Dimmer" <dimmable-light> (FF_ConfRoom) {channel="hue:0210:00178829c236:3:color"}
-Dimmer FF_CR_LightTemperature "Warm/Kalt" <dimmable-light> (FF_ConfRoom) {channel="hue:0210:00178829c236:3:color_temperature"}
-Color FF_CR_Color "Farbe" <rgb> (FF_ConfRoom) {channel="hue:0210:00178829c236:3:color"} // TODO evtl. color_temperature
+Dimmer FF_CR_LightBrightness "Dimmer" <dimmablelight> (FF_ConfRoom) {channel="hue:0210:00178829c236:3:color"}
+Dimmer FF_CR_LightTemperature "Warm/Kalt" <dimmablelight> (FF_ConfRoom) {channel="hue:0210:00178829c236:3:color_temperature"}
+Color FF_CR_Color "Farbe" <rgb> (FF_ConfRoom) {channel="hue:0210:00178829c236:3:color"}
+
+Number FF_CR_LightScene "Profil" <light> (FF_ConfRoom)
+Number FF_CR_MusicGenre "Genre" <soundvolume> (FF_ConfRoom)
 
 Switch FF_CR_RockMusic "Rock" <switch> (FF_ConfRoom)
 Switch FF_CR_PopMusic "Pop" <switch> (FF_ConfRoom)
 
 Switch FF_CR_AllOff "Alles ausschalten" <light-off> (FF_ConfRoom)
 
-Player FF_CR_SonosControl "Musik" <settings> (FF_ConfRoom) {channel="sonos:PLAY1:RINCON_B8E937EE9FAE01400:control"}
-Dimmer FF_CR_Volume "Lautstärke" <soundvolume> (FF_ConfRoom) {channel="sonos:PLAY1:RINCON_B8E937EE9FAE01400:volume"}
+Group FF_CR_Music "Musik" <settings>
+Player FF_CR_MusicControl "Musik" <settings> (FF_CR_Music) {channel="sonos:PLAY1:RINCON_B8E937EE9FAE01400:control"}
+Dimmer FF_CR_MusicVolume "Lautstärke" <soundvolume> (FF_ConfRoom) {channel="sonos:PLAY1:RINCON_B8E937EE9FAE01400:volume"}
+
 
 Group GF_EntranceArea "Eingangsbereich" <door> (GF)
-Switch GF_EA_Doorbell "Türklingel" <bell> (GF_EntranceArea)
 
-
+Switch GF_EA_Doorbell "Türklingel" <bell> (GF_EntranceArea) {channel="serialthing:doorbell:COM4:doorbell"}
 
 String VoiceCommand "Sprachbefehl"
 
@@ -36,7 +40,7 @@ String FF_CR_DoorbellL {channel="hue:0210:00178829c236:3:alert"}
 String GF_EA_DoorBellSound {channel="sonos:PLAY1:RINCON_B8E937EE9FAE01400:notificationsound"}
 String GF_EA_DoorBellVolume {channel="sonos:PLAY1:RINCON_B8E937EE9FAE01400:notificationvolume"}
 
-
+Switch FF_CR_Effect "Farbwechsel" {channel="hue:0210:00178829c236:3:effect"}
 
 // Switch lrSonosPlayPause "Schalter" (GF_LivingRoom) // {channel="sonos:CONNECTAMP:RINCON_000E5831F91C01400:control"}
 // Player lrSonosControl "Sonos Controller" <settings> (GF_LivingRoom) {channel="sonos:CONNECTAMP:RINCON_000E5831F91C01400:control"}
