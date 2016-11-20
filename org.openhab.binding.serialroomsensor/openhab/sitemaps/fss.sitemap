@@ -17,7 +17,6 @@ sitemap fss label="FSS CONSULTING GMBH" {
 				Frame label="Licht" {
 					Switch item=FF_CR_LightScene label="Profil" mappings=[0=Aus, 1=Normal, 2=Arbeit, 3=Hintergrund]
 					Slider item=FF_CR_LightBrightness icon="slider"
-					Slider item=FF_CR_LightTemperature
 				}
 				Frame label="Musik" {
 					Switch item=FF_CR_MusicGenre label="Genre" mappings=[0=Aus, 1=Rock, 2=Pop]

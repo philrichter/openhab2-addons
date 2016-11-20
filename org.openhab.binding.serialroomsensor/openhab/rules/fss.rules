@@ -45,21 +45,6 @@ then
 	}
 end
 
-//rule NormalLightSwitchedOn
-//when
-//	Item FF_CR_NormalLight received command
-//then
-//	if (FF_CR_NormalLight.state == ON) {
-//		sendCommand(FF_CR_Effect, OFF)
-//		sendCommand(FF_CR_LightTemperature, 100);
-//		sendCommand(FF_CR_LightBrightness, 80);
-//		postUpdate(FF_CR_WorkLight, OFF)
-//		postUpdate(FF_CR_MovieLight, OFF)
-//	} else {
-//		sendCommand(FF_CR_LightBrightness, 0);
-//	}
-//end
-
 rule DashButtonPushed
 when 
 	Channel "amazondashbutton:dashbutton:50-f5-da-79-96-eb:press" triggered	
@@ -72,39 +57,6 @@ then
 		postUpdate(FF_CR_LightScene, 1)
 	}
 end
-
-//rule WorkLightSwitchedOn
-//when
-//	Item FF_CR_WorkLight received command
-//then
-//	if (FF_CR_WorkLight.state == ON) {
-//		sendCommand(FF_CR_Effect, OFF)
-//		sendCommand(FF_CR_LightTemperature, 0);
-//		sendCommand(FF_CR_LightBrightness, 100);
-//		postUpdate(FF_CR_NormalLight, OFF)
-//		postUpdate(FF_CR_MovieLight, OFF)
-//		postUpdate(FF_CR_AllOff, OFF)
-//	} else {
-//		sendCommand(FF_CR_LightBrightness, 0);
-//	}
-//end
-
-//rule MovieLightSwitchedOn
-//when
-//	Item FF_CR_MovieLight received command
-//then
-//	if (FF_CR_MovieLight.state == ON) {
-//		sendCommand(FF_CR_Effect, ON)
-//		sendCommand(FF_CR_LightBrightness, 50);
-//		sendCommand(FF_CR_LightTemperature, 0);
-//		postUpdate(FF_CR_NormalLight, OFF)
-//		postUpdate(FF_CR_WorkLight, OFF)
-//		postUpdate(FF_CR_AllOff, OFF)
-//	} else {
-//		sendCommand(FF_CR_Effect, OFF) 
-//		sendCommand(FF_CR_LightBrightness, 0);
-//	}
-//end
 
 rule MusicGenreChanged
 when 
@@ -130,34 +82,6 @@ then
 		postUpdate(FF_CR_AllOff, OFF)
 	}
 end
-
-//rule RockMusicSwitchedOn
-//when 
-//	Item FF_CR_RockMusic received command
-//then
-//	if (FF_CR_RockMusic.state == ON) {
-//		sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/rock.mp3")
-//		// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/rock.mp3")
-//		postUpdate(FF_CR_PopMusic, OFF)
-//		postUpdate(FF_CR_AllOff, OFF)
-//	} else {
-//		sendCommand(FF_CR_Stop, ON)
-//	}
-//end
-//
-//rule PopMusicSwitchedOn
-//when 
-//	Item FF_CR_PopMusic received command
-//then
-//	if (FF_CR_PopMusic.state == ON) {
-//		sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8081/static/pop.mp3"
-//		// sendCommand(FF_CR_PlayURI, "http://NB-P-RICHTER:8080/static/pop.mp3"
-//		postUpdate(FF_CR_RockMusic, OFF)
-//		postUpdate(FF_CR_AllOff, OFF)
-//	} else {
-//		sendCommand(FF_CR_Stop, ON)
-//	}
-//end
 
 rule AllOff
 when 
