@@ -1,0 +1,17 @@
+sitemap mobile label="FSS CONSULTING GMBH" {
+	
+	Frame label="Schnellzugriff" {
+    	Slider item=FF_CR_MusicVolume label="Sonos - Volume [%.1f %%]" 
+		Switch item=FF_CR_AllOff label="" icon="settings" mappings=[ON="Alles ausschalten"]        	
+	}
+	
+	Frame {
+		Group item=FF icon="firstfloor"                     
+		Switch label="Eingangstür" item=GF_EA_Doorbell icon="door" mappings=[ON="Klingeln"]
+	}
+//	
+//	Frame label="Wetter" {
+//		
+//	}
+
+} 

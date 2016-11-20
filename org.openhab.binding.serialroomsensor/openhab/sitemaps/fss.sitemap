@@ -5,7 +5,7 @@ sitemap fss label="FSS CONSULTING GMBH" {
 		Switch item=FF_CR_AllOff label="" icon="settings" mappings=[ON="Alles ausschalten"]        	
 	}
 	
-	Frame {
+	Frame label="Gebäude" {
 //		Group item=FF icon="firstfloor"
 		Text label="Obergeschoss" icon="firstfloor" {
 			Frame label="Besprechungsraum" icon="office" {
